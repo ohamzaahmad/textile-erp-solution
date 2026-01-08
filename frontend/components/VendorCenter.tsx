@@ -22,7 +22,8 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
     name: '', 
     contact: '', 
     address: '', 
-    bankDetails: '' 
+    bankDetails: '',
+    shortDescription: ''
   });
 
   const selectedVendor = vendors.find(v => v.id === selectedVendorId);
@@ -76,7 +77,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
     };
     onAddVendor(vendor);
     setIsCreatingVendor(false);
-    setNewVendorData({ name: '', contact: '', address: '', bankDetails: '' });
+    setNewVendorData({ name: '', contact: '', address: '', bankDetails: '', shortDescription: '' });
     setSelectedVendorId(vendor.id);
   };
 
@@ -99,6 +100,14 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Contact Phone</label>
                   <input type="text" value={newVendorData.contact} onChange={e => setNewVendorData({...newVendorData, contact: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" placeholder="03xx-xxxxxxx" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Address</label>
+                  <input type="text" value={newVendorData.address} onChange={e => setNewVendorData({...newVendorData, address: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" placeholder="Street, City, Country" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Short Description</label>
+                  <input type="text" value={newVendorData.shortDescription} onChange={e => setNewVendorData({...newVendorData, shortDescription: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" placeholder="Optional short notes" />
                 </div>
               </div>
               <div className="pt-4 flex justify-end space-x-3 border-t">

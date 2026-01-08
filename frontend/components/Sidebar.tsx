@@ -50,18 +50,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
         ))}
       </nav>
 
-      <div className="p-4 border-t border-[#1a3a6b] space-y-4">
-        <div className="text-[10px] text-blue-200">
-          <p className="font-bold opacity-60 uppercase tracking-widest mb-1">Session Data</p>
-          <p>Access: <span className="text-white">{role.toUpperCase()}</span></p>
-          <p>Status: <span className="text-green-400 font-bold">Encrypted</span></p>
-        </div>
-        
+      <div className="p-4 border-t border-[#1a3a6b]">
         <button 
           onClick={onLogout}
-          className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-200 border border-red-500/20 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+          className="w-full bg-white text-[#2b5797] py-2 rounded-lg text-[12px] font-black uppercase tracking-widest transition-all hover:opacity-90"
         >
-          <i className="fas fa-sign-out-alt mr-2"></i> Terminate Session
+          <i className="fas fa-sign-out-alt mr-2"></i> Logout
         </button>
       </div>
     </aside>

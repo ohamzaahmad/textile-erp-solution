@@ -177,6 +177,11 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    try {
+      authAPI.logout();
+    } catch (e) {
+      console.error('Logout error', e);
+    }
     setCurrentUser(null);
     setVendors([]);
     setCustomers([]);

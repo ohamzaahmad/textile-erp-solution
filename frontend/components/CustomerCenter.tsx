@@ -20,7 +20,8 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
   const [newCustomerData, setNewCustomerData] = useState({ 
     name: '', 
     contact: '', 
-    address: '' 
+    address: '',
+    shortDescription: ''
   });
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -68,12 +69,13 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       name: newCustomerData.name,
       contact: newCustomerData.contact,
       address: newCustomerData.address,
+      shortDescription: newCustomerData.shortDescription,
       balance: 0,
       logs: []
     };
     onAddCustomer(customer);
     setIsCreatingCustomer(false);
-    setNewCustomerData({ name: '', contact: '', address: '' });
+    setNewCustomerData({ name: '', contact: '', address: '', shortDescription: '' });
     setSelectedCustomerId(customer.id);
   };
 
@@ -90,6 +92,8 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
             <div className="p-6 space-y-4">
               <input type="text" value={newCustomerData.name} onChange={e => setNewCustomerData({...newCustomerData, name: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Customer Name" />
               <input type="text" value={newCustomerData.contact} onChange={e => setNewCustomerData({...newCustomerData, contact: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Contact Phone" />
+              <input type="text" value={newCustomerData.address} onChange={e => setNewCustomerData({...newCustomerData, address: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Address (optional)" />
+              <input type="text" value={newCustomerData.shortDescription} onChange={e => setNewCustomerData({...newCustomerData, shortDescription: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Short description (optional)" />
               <div className="pt-4 flex justify-end space-x-2 border-t">
                 <button onClick={() => setIsCreatingCustomer(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
                 <button onClick={handleCreateCustomer} className="px-6 py-2 text-xs font-bold bg-[#2b5797] text-white rounded">Save</button>
