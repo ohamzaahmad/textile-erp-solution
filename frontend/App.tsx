@@ -1,0 +1,473 @@
+
+import React, { useState, useEffect } from 'react';
+import { Page, Vendor, Customer, InventoryItem, Invoice, Bill, PaymentRecord, Transaction, User } from './types';
+import { vendorsAPI, customersAPI, inventoryAPI, invoicesAPI, billsAPI, authAPI, TokenManager } from './api';
+import Sidebar from './components/Sidebar';
+import FlowchartDashboard from './components/FlowchartDashboard';
+import VendorCenter from './components/VendorCenter';
+import CustomerCenter from './components/CustomerCenter';
+import InventoryCenter from './components/InventoryCenter';
+import InvoiceBillCenter from './components/InvoiceBillCenter';
+import ReportsCenter from './components/ReportsCenter';
+import DepositsCenter from './components/DepositsCenter';
+import ItemMasterCenter from './components/ItemMasterCenter';
+import AuthPage from './components/AuthPage';
+import Toast from './components/Toast';
+
+const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [pendingBillItem, setPendingBillItem] = useState<InventoryItem | null>(null);
+
+  // Load data from backend when user logs in
+  useEffect(() => {
+    if (currentUser) {
+      loadAllData();
+    }
+  }, [currentUser]);
+
+  // Restore session on initial mount if tokens exist
+  useEffect(() => {
+    const tryRestore = async () => {
+      const token = TokenManager.getAccessToken();
+      if (!token) return;
+      try {
+        const userData = await authAPI.getCurrentUser();
+        const user: User = {
+          username: userData.username,
+          role: userData.role as any,
+          name: userData.name,
+        };
+        setCurrentUser(user);
+      } catch (err) {
+        console.error('Session restore failed:', err);
+        TokenManager.clearTokens();
+      }
+    };
+    tryRestore();
+  }, []);
+
+  const loadAllData = async () => {
+    setIsLoading(true);
+    try {
+      const [vendorsData, customersData, inventoryData, invoicesData, billsData] = await Promise.all([
+        vendorsAPI.getAll(),
+        customersAPI.getAll(),
+        inventoryAPI.getAll(),
+        invoicesAPI.getAll(),
+        billsAPI.getAll(),
+      ]);
+
+      console.log('Loaded data:', { vendorsData, customersData, inventoryData, invoicesData, billsData });
+
+      // Map backend data to frontend format
+      setVendors(Array.isArray(vendorsData) ? vendorsData.map(mapVendor) : []);
+      setCustomers(Array.isArray(customersData) ? customersData.map(mapCustomer) : []);
+      setInventory(Array.isArray(inventoryData) ? inventoryData.map(mapInventoryItem) : []);
+      setInvoices(Array.isArray(invoicesData) ? invoicesData.map(mapInvoice) : []);
+      setBills(Array.isArray(billsData) ? billsData.map(mapBill) : []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      alert('Failed to load data from server. Please refresh the page.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Mapping functions to convert backend format to frontend format
+  const mapVendor = (data: any): Vendor => ({
+    id: String(data.id),
+    name: data.name,
+    contact: data.contact,
+    address: data.address || '',
+    bankDetails: data.bank_details || '',
+    balance: parseFloat(data.balance),
+    logs: [] // Will be loaded separately if needed
+  });
+
+  const mapCustomer = (data: any): Customer => ({
+    id: String(data.id),
+    name: data.name,
+    contact: data.contact,
+    address: data.address || '',
+    balance: parseFloat(data.balance),
+    logs: [] // Will be loaded separately if needed
+  });
+
+  const mapInventoryItem = (data: any): InventoryItem => ({
+    id: String(data.id),
+    lotNumber: data.lot_number,
+    type: data.fabric_type,
+    meters: parseFloat(data.meters),
+    unitPrice: parseFloat(data.unit_price),
+    vendorId: String(data.vendor),
+    receivedDate: data.received_date,
+    isBilled: data.is_billed
+  });
+
+  const mapInvoice = (data: any): Invoice => ({
+    id: String(data.id),
+    customerId: String(data.customer),
+    date: data.date,
+    dueDate: data.due_date,
+    items: data.items?.map((item: any) => ({
+      itemId: String(item.inventory_item),
+      meters: parseFloat(item.meters),
+      price: parseFloat(item.price)
+    })) || [],
+    status: data.status as Invoice['status'],
+    total: parseFloat(data.total),
+    amountPaid: parseFloat(data.amount_paid),
+    paymentHistory: data.payment_records?.map((pr: any) => ({
+      id: String(pr.id),
+      date: pr.date,
+      amount: parseFloat(pr.amount),
+      method: pr.method,
+      bankName: pr.bank_name,
+      tid: pr.tid
+    })) || []
+  });
+
+  const mapBill = (data: any): Bill => ({
+    id: String(data.id),
+    vendorId: String(data.vendor),
+    date: data.date,
+    dueDate: data.due_date,
+    items: data.items?.map((item: any) => ({
+      itemId: String(item.inventory_item),
+      meters: parseFloat(item.meters),
+      price: parseFloat(item.price)
+    })) || [],
+    status: data.status as Bill['status'],
+    total: parseFloat(data.total),
+    amountPaid: parseFloat(data.amount_paid),
+    paymentHistory: data.payment_records?.map((pr: any) => ({
+      id: String(pr.id),
+      date: pr.date,
+      amount: parseFloat(pr.amount),
+      method: pr.method,
+      bankName: pr.bank_name,
+      tid: pr.tid
+    })) || []
+  });
+
+  // Redirection Logic for Cashier
+  useEffect(() => {
+    if (currentUser?.role === 'cashier') {
+      if (currentPage !== 'invoices' && currentPage !== 'customers') {
+        setCurrentPage('invoices');
+      }
+    }
+  }, [currentUser, currentPage]);
+
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+    if (user.role === 'cashier') {
+      setCurrentPage('invoices');
+    } else {
+      setCurrentPage('home');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setVendors([]);
+    setCustomers([]);
+    setInventory([]);
+    setInvoices([]);
+    setBills([]);
+  };
+
+  const handleReceiveStock = async (items: InventoryItem | InventoryItem[]) => {
+    const itemsToAdd = Array.isArray(items) ? items : [items];
+    
+    try {
+      // Create inventory items in backend
+      for (const item of itemsToAdd) {
+        const backendData = {
+          lot_number: item.lotNumber,
+          fabric_type: item.type,
+          meters: parseFloat(String(item.meters)),
+          unit_price: parseFloat(String(item.unitPrice)),
+          vendor: parseInt(item.vendorId),
+          received_date: item.receivedDate,
+        };
+        console.log('Creating inventory item:', backendData);
+        await inventoryAPI.create(backendData);
+      }
+      
+      // Reload inventory from backend
+      const inventoryData = await inventoryAPI.getAll();
+      setInventory(Array.isArray(inventoryData) ? inventoryData.map(mapInventoryItem) : []);
+    } catch (error: any) {
+      console.error('Error adding inventory:', error);
+      alert(`Failed to add inventory items: ${error.message}`);
+    }
+  };
+
+  const handleInitiateBill = (item: InventoryItem) => {
+    setPendingBillItem(item);
+    setCurrentPage('bills');
+  };
+
+  const handleAddVendor = async (vendor: Vendor) => {
+    try {
+      const backendData = {
+        name: vendor.name,
+        contact: vendor.contact,
+        address: vendor.address,
+        bank_details: vendor.bankDetails,
+      };
+      const newVendor = await vendorsAPI.create(backendData);
+      setVendors(prev => [...prev, mapVendor(newVendor)]);
+    } catch (error) {
+      console.error('Error adding vendor:', error);
+      alert('Failed to add vendor. Please try again.');
+    }
+  };
+
+  const handleAddCustomer = async (customer: Customer) => {
+    try {
+      const backendData = {
+        name: customer.name,
+        contact: customer.contact,
+        address: customer.address,
+      };
+      const newCustomer = await customersAPI.create(backendData);
+      setCustomers(prev => [...prev, mapCustomer(newCustomer)]);
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      alert('Failed to add customer. Please try again.');
+    }
+  };
+
+  const handleAddBill = async (billData: any) => {
+    try {
+      const backendData = {
+        bill_number: billData.id,
+        vendor: parseInt(billData.vendorId),
+        date: billData.date,
+        due_date: billData.dueDate,
+        notes: billData.notes || '',
+        items: billData.items.map((item: any) => ({
+          inventory_item: parseInt(item.itemId),
+          meters: item.meters,
+          price: item.price
+        }))
+      };
+      
+      const newBill = await billsAPI.create(backendData);
+      
+      // If there's an initial payment, add it
+      if (billData.initialPayment) {
+        await billsAPI.addPayment(String(newBill.id), {
+          date: billData.initialPayment.date,
+          amount: billData.initialPayment.amount,
+          method: billData.initialPayment.method,
+          bank_name: billData.initialPayment.bankName,
+          tid: billData.initialPayment.tid
+        });
+      }
+      
+      // Reload bills, inventory, and vendors
+      const [billsData, inventoryData, vendorsData] = await Promise.all([
+        billsAPI.getAll(),
+        inventoryAPI.getAll(),
+        vendorsAPI.getAll()
+      ]);
+      
+      setBills(billsData.map(mapBill));
+      setInventory(inventoryData.map(mapInventoryItem));
+      setVendors(vendorsData.map(mapVendor));
+      
+      setPendingBillItem(null);
+    } catch (error) {
+      console.error('Error creating bill:', error);
+      alert('Failed to create bill. Please try again.');
+    }
+  };
+
+  const handlePayBill = async (billId: string, payment: PaymentRecord) => {
+    try {
+      await billsAPI.addPayment(billId, {
+        date: payment.date,
+        amount: payment.amount,
+        method: payment.method,
+        bank_name: payment.bankName,
+        tid: payment.tid
+      });
+      
+      // Reload bills and vendors
+      const [billsData, vendorsData] = await Promise.all([
+        billsAPI.getAll(),
+        vendorsAPI.getAll()
+      ]);
+      
+      setBills(billsData.map(mapBill));
+      setVendors(vendorsData.map(mapVendor));
+    } catch (error) {
+      console.error('Error adding payment to bill:', error);
+      alert('Failed to process payment. Please try again.');
+    }
+  };
+
+  const handleReceivePayment = async (invoiceId: string, payment: PaymentRecord) => {
+    try {
+      await invoicesAPI.addPayment(invoiceId, {
+        date: payment.date,
+        amount: payment.amount,
+        method: payment.method,
+        bank_name: payment.bankName,
+        tid: payment.tid
+      });
+      
+      // Reload invoices and customers
+      const [invoicesData, customersData] = await Promise.all([
+        invoicesAPI.getAll(),
+        customersAPI.getAll()
+      ]);
+      
+      setInvoices(invoicesData.map(mapInvoice));
+      setCustomers(customersData.map(mapCustomer));
+    } catch (error) {
+      console.error('Error adding payment to invoice:', error);
+      alert('Failed to process payment. Please try again.');
+    }
+  };
+
+  const handleAddInvoice = async (invoiceData: any) => {
+    try {
+      const backendData = {
+        invoice_number: invoiceData.id,
+        customer: parseInt(invoiceData.customerId),
+        date: invoiceData.date,
+        due_date: invoiceData.dueDate,
+        notes: invoiceData.notes || '',
+        items: invoiceData.items.map((item: any) => ({
+          inventory_item: parseInt(item.itemId),
+          meters: item.meters,
+          price: item.price
+        }))
+      };
+      
+      const newInvoice = await invoicesAPI.create(backendData);
+      
+      // If there's an initial payment, add it
+      if (invoiceData.initialPayment) {
+        await invoicesAPI.addPayment(String(newInvoice.id), {
+          date: invoiceData.initialPayment.date,
+          amount: invoiceData.initialPayment.amount,
+          method: invoiceData.initialPayment.method,
+          bank_name: invoiceData.initialPayment.bankName,
+          tid: invoiceData.initialPayment.tid
+        });
+      }
+      
+      // Reload invoices, inventory, and customers
+      const [invoicesData, inventoryData, customersData] = await Promise.all([
+        invoicesAPI.getAll(),
+        inventoryAPI.getAll(),
+        customersAPI.getAll()
+      ]);
+      
+      setInvoices(invoicesData.map(mapInvoice));
+      setInventory(inventoryData.map(mapInventoryItem));
+      setCustomers(customersData.map(mapCustomer));
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      alert('Failed to create invoice. Please try again.');
+    }
+  };
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'home':
+        // compute financial summary from invoices and bills
+        const payables = bills.reduce((acc, b) => acc + (parseFloat(String(b.total || 0)) - parseFloat(String(b.amountPaid || 0))), 0);
+        const receivables = invoices.reduce((acc, i) => acc + (parseFloat(String(i.total || 0)) - parseFloat(String(i.amountPaid || 0))), 0);
+        return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables }} />;
+      case 'vendors':
+        return <VendorCenter vendors={vendors} bills={bills} onPayBill={handlePayBill} onAddVendor={handleAddVendor} />;
+      case 'customers':
+        return <CustomerCenter customers={customers} invoices={invoices} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} />;
+      case 'inventory':
+        return <InventoryCenter inventory={inventory} setInventory={setInventory} vendors={vendors} onReceive={handleReceiveStock} onInitiateBill={handleInitiateBill} />;
+      case 'invoices':
+      case 'bills':
+        return (
+          <InvoiceBillCenter 
+            type={currentPage === 'invoices' ? 'Invoice' : 'Bill'} 
+            items={currentPage === 'invoices' ? invoices : bills}
+            onAdd={currentPage === 'invoices' ? handleAddInvoice : handleAddBill}
+            vendors={vendors}
+            customers={customers}
+            inventory={inventory}
+            preFilledItem={currentPage === 'bills' ? pendingBillItem : null}
+            onPayBill={handlePayBill}
+            onReceivePayment={handleReceivePayment}
+          />
+        );
+
+      case 'deposits':
+        return <DepositsCenter invoices={invoices} bills={bills} />;
+      case 'itemMaster':
+        return <ItemMasterCenter inventory={inventory} />;
+      case 'reports':
+        return <ReportsCenter invoices={invoices} bills={bills} />;
+      default:
+        return <FlowchartDashboard onNavigate={setCurrentPage} />;
+    }
+  };
+
+  if (!currentUser) {
+    return <AuthPage onLogin={handleLogin} />;
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Toast />
+      <Sidebar 
+        currentPage={currentPage} 
+        onNavigate={setCurrentPage} 
+        role={currentUser.role}
+        onLogout={handleLogout}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#e0e7ee]">
+        <div className="h-8 bg-[#f8f9fa] border-b border-[#a3b6cc] flex items-center px-4 space-x-1 shrink-0 shadow-sm">
+          {currentUser.role === 'manager' && (
+            <button 
+              onClick={() => setCurrentPage('home')}
+              className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-colors ${currentPage === 'home' ? 'bg-[#2b5797] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
+            >
+              <i className="fas fa-home"></i> <span>Home</span>
+            </button>
+          )}
+          <div className="px-4 h-full text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center border-r border-[#dee2e6]">
+            {currentPage.replace(/([A-Z])/g, ' $1')} Center
+          </div>
+          <div className="flex-1 flex justify-end items-center text-[10px] font-black text-slate-400 uppercase space-x-4">
+             <span><i className="fas fa-user-circle mr-1 text-blue-400"></i> {currentUser.name}</span>
+             <span className="bg-slate-200 px-2 py-0.5 rounded text-slate-600 border border-slate-300">{currentUser.role}</span>
+             {isLoading && (
+               <span className="flex items-center text-blue-600">
+                 <i className="fas fa-sync fa-spin mr-2"></i> Loading...
+               </span>
+             )}
+          </div>
+        </div>
+        <main className="flex-1 overflow-auto p-8 relative bg-[#eef2f6]">
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default App;
