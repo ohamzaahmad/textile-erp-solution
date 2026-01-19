@@ -117,8 +117,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       items: lineItems.map(li => ({ itemId: li.itemId, meters: li.meters, price: li.price })),
       total: totalAmount,
-      amountPaid: creationAmount,
-      paymentHistory: initialPayment ? [initialPayment] : []
+      amountPaid: initialPayment ? creationAmount : 0,
+      paymentHistory: initialPayment ? [initialPayment] : [],
+      initialPayment: initialPayment // Pass for backend API call
     };
     onAdd(newItem);
     resetForm();

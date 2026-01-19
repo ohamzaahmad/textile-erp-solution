@@ -7,7 +7,7 @@ interface VendorCenterProps {
   vendors: Vendor[];
   bills: Bill[];
   onPayBill: (billId: string, payment: PaymentRecord) => void;
-  onAddVendor: (vendor: Vendor) => void;
+  onAddVendor: (vendor: Vendor) => Promise<Vendor | null>;
 }
 
 const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, onAddVendor }) => {
@@ -61,13 +61,13 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
     }
   };
 
-  const handleCreateVendor = () => {
+  const handleCreateVendor = async () => {
     if (!newVendorData.name) {
       alert("Vendor name is required.");
       return;
     }
     const vendor: Vendor = {
-      id: `v${Date.now()}`,
+      id: '', // Will be assigned by backend
       name: newVendorData.name,
       contact: newVendorData.contact,
       address: newVendorData.address,
@@ -75,10 +75,12 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
       balance: 0,
       logs: []
     };
-    onAddVendor(vendor);
+    const result = await onAddVendor(vendor);
     setIsCreatingVendor(false);
     setNewVendorData({ name: '', contact: '', address: '', bankDetails: '', shortDescription: '' });
-    setSelectedVendorId(vendor.id);
+    if (result) {
+      setSelectedVendorId(result.id); // Use the ID from backend response
+    }
   };
 
   return (

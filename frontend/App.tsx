@@ -68,8 +68,34 @@ const App: React.FC = () => {
       console.log('Loaded data:', { vendorsData, customersData, inventoryData, invoicesData, billsData });
 
       // Map backend data to frontend format
-      setVendors(Array.isArray(vendorsData) ? vendorsData.map(mapVendor) : []);
-      setCustomers(Array.isArray(customersData) ? customersData.map(mapCustomer) : []);
+      const mappedVendors = Array.isArray(vendorsData) ? vendorsData.map(mapVendor) : [];
+      const mappedCustomers = Array.isArray(customersData) ? customersData.map(mapCustomer) : [];
+      
+      // Load transaction logs for each vendor and customer
+      const vendorsWithLogs = await Promise.all(
+        mappedVendors.map(async (vendor) => {
+          try {
+            const transactions = await vendorsAPI.getTransactions(vendor.id);
+            return { ...vendor, logs: Array.isArray(transactions) ? transactions.map(mapTransaction) : [] };
+          } catch {
+            return vendor;
+          }
+        })
+      );
+      
+      const customersWithLogs = await Promise.all(
+        mappedCustomers.map(async (customer) => {
+          try {
+            const transactions = await customersAPI.getTransactions(customer.id);
+            return { ...customer, logs: Array.isArray(transactions) ? transactions.map(mapTransaction) : [] };
+          } catch {
+            return customer;
+          }
+        })
+      );
+      
+      setVendors(vendorsWithLogs);
+      setCustomers(customersWithLogs);
       setInventory(Array.isArray(inventoryData) ? inventoryData.map(mapInventoryItem) : []);
       setInvoices(Array.isArray(invoicesData) ? invoicesData.map(mapInvoice) : []);
       setBills(Array.isArray(billsData) ? billsData.map(mapBill) : []);
@@ -84,78 +110,88 @@ const App: React.FC = () => {
   // Mapping functions to convert backend format to frontend format
   const mapVendor = (data: any): Vendor => ({
     id: String(data.id),
-    name: data.name,
-    contact: data.contact,
+    name: data.name || '',
+    contact: data.contact || '',
     address: data.address || '',
     bankDetails: data.bank_details || '',
-    balance: parseFloat(data.balance),
+    balance: parseFloat(data.balance) || 0,
     logs: [] // Will be loaded separately if needed
   });
 
   const mapCustomer = (data: any): Customer => ({
     id: String(data.id),
-    name: data.name,
-    contact: data.contact,
+    name: data.name || '',
+    contact: data.contact || '',
     address: data.address || '',
-    balance: parseFloat(data.balance),
+    shortDescription: data.short_description || '',
+    balance: parseFloat(data.balance) || 0,
     logs: [] // Will be loaded separately if needed
   });
 
   const mapInventoryItem = (data: any): InventoryItem => ({
     id: String(data.id),
-    lotNumber: data.lot_number,
-    type: data.fabric_type,
-    meters: parseFloat(data.meters),
-    unitPrice: parseFloat(data.unit_price),
+    lotNumber: data.lot_number || '',
+    type: data.fabric_type || '',
+    meters: parseFloat(data.meters) || 0,
+    unitPrice: parseFloat(data.unit_price) || 0,
     vendorId: String(data.vendor),
-    receivedDate: data.received_date,
-    isBilled: data.is_billed
+    receivedDate: data.received_date || new Date().toISOString().slice(0, 10),
+    isBilled: data.is_billed || false
   });
 
   const mapInvoice = (data: any): Invoice => ({
     id: String(data.id),
     customerId: String(data.customer),
-    date: data.date,
-    dueDate: data.due_date,
+    date: data.date || '',
+    dueDate: data.due_date || '',
     items: data.items?.map((item: any) => ({
       itemId: String(item.inventory_item),
-      meters: parseFloat(item.meters),
-      price: parseFloat(item.price)
+      meters: parseFloat(item.meters) || 0,
+      price: parseFloat(item.price) || 0
     })) || [],
-    status: data.status as Invoice['status'],
-    total: parseFloat(data.total),
-    amountPaid: parseFloat(data.amount_paid),
+    status: (data.status as Invoice['status']) || 'Pending',
+    total: parseFloat(data.total) || 0,
+    amountPaid: parseFloat(data.amount_paid) || 0,
     paymentHistory: data.payment_records?.map((pr: any) => ({
       id: String(pr.id),
-      date: pr.date,
-      amount: parseFloat(pr.amount),
-      method: pr.method,
-      bankName: pr.bank_name,
-      tid: pr.tid
+      date: pr.date || '',
+      amount: parseFloat(pr.amount) || 0,
+      method: pr.method || 'Cash',
+      bankName: pr.bank_name || '',
+      tid: pr.tid || ''
     })) || []
   });
 
   const mapBill = (data: any): Bill => ({
     id: String(data.id),
     vendorId: String(data.vendor),
-    date: data.date,
-    dueDate: data.due_date,
+    date: data.date || '',
+    dueDate: data.due_date || '',
     items: data.items?.map((item: any) => ({
       itemId: String(item.inventory_item),
-      meters: parseFloat(item.meters),
-      price: parseFloat(item.price)
+      meters: parseFloat(item.meters) || 0,
+      price: parseFloat(item.price) || 0
     })) || [],
-    status: data.status as Bill['status'],
-    total: parseFloat(data.total),
-    amountPaid: parseFloat(data.amount_paid),
+    status: (data.status as Bill['status']) || 'Unpaid',
+    total: parseFloat(data.total) || 0,
+    amountPaid: parseFloat(data.amount_paid) || 0,
     paymentHistory: data.payment_records?.map((pr: any) => ({
       id: String(pr.id),
-      date: pr.date,
-      amount: parseFloat(pr.amount),
-      method: pr.method,
-      bankName: pr.bank_name,
-      tid: pr.tid
+      date: pr.date || '',
+      amount: parseFloat(pr.amount) || 0,
+      method: pr.method || 'Cash',
+      bankName: pr.bank_name || '',
+      tid: pr.tid || ''
     })) || []
+  });
+
+  const mapTransaction = (data: any): Transaction => ({
+    id: String(data.id),
+    date: data.date || '',
+    type: data.transaction_type as Transaction['type'],
+    amount: parseFloat(data.amount) || 0,
+    description: data.description || '',
+    referenceId: data.reference_id || ''
   });
 
   // Redirection Logic for Cashier
@@ -231,10 +267,13 @@ const App: React.FC = () => {
         bank_details: vendor.bankDetails,
       };
       const newVendor = await vendorsAPI.create(backendData);
-      setVendors(prev => [...prev, mapVendor(newVendor)]);
+      const mappedVendor = mapVendor(newVendor);
+      setVendors(prev => [...prev, mappedVendor]);
+      return mappedVendor; // Return the mapped vendor with correct ID
     } catch (error) {
       console.error('Error adding vendor:', error);
       alert('Failed to add vendor. Please try again.');
+      return null;
     }
   };
 
@@ -246,7 +285,9 @@ const App: React.FC = () => {
         address: customer.address,
       };
       const newCustomer = await customersAPI.create(backendData);
-      setCustomers(prev => [...prev, mapCustomer(newCustomer)]);
+      const mappedCustomer = mapCustomer(newCustomer);
+      setCustomers(prev => [...prev, mappedCustomer]);
+      return mappedCustomer; // Return the mapped customer with correct ID
     } catch (error) {
       console.error('Error adding customer:', error);
       alert('Failed to add customer. Please try again.');
@@ -281,16 +322,28 @@ const App: React.FC = () => {
         });
       }
       
-      // Reload bills, inventory, and vendors
+      // Reload bills, inventory, and vendors with transaction logs
       const [billsData, inventoryData, vendorsData] = await Promise.all([
         billsAPI.getAll(),
         inventoryAPI.getAll(),
         vendorsAPI.getAll()
       ]);
       
+      const mappedVendors = vendorsData.map(mapVendor);
+      const vendorsWithLogs = await Promise.all(
+        mappedVendors.map(async (vendor: Vendor) => {
+          try {
+            const transactions = await vendorsAPI.getTransactions(vendor.id);
+            return { ...vendor, logs: Array.isArray(transactions) ? transactions.map(mapTransaction) : [] };
+          } catch {
+            return vendor;
+          }
+        })
+      );
+      
       setBills(billsData.map(mapBill));
       setInventory(inventoryData.map(mapInventoryItem));
-      setVendors(vendorsData.map(mapVendor));
+      setVendors(vendorsWithLogs);
       
       setPendingBillItem(null);
     } catch (error) {
@@ -309,14 +362,26 @@ const App: React.FC = () => {
         tid: payment.tid
       });
       
-      // Reload bills and vendors
+      // Reload bills and vendors with their transaction logs
       const [billsData, vendorsData] = await Promise.all([
         billsAPI.getAll(),
         vendorsAPI.getAll()
       ]);
       
+      const mappedVendors = vendorsData.map(mapVendor);
+      const vendorsWithLogs = await Promise.all(
+        mappedVendors.map(async (vendor: Vendor) => {
+          try {
+            const transactions = await vendorsAPI.getTransactions(vendor.id);
+            return { ...vendor, logs: Array.isArray(transactions) ? transactions.map(mapTransaction) : [] };
+          } catch {
+            return vendor;
+          }
+        })
+      );
+      
       setBills(billsData.map(mapBill));
-      setVendors(vendorsData.map(mapVendor));
+      setVendors(vendorsWithLogs);
     } catch (error) {
       console.error('Error adding payment to bill:', error);
       alert('Failed to process payment. Please try again.');
@@ -333,14 +398,26 @@ const App: React.FC = () => {
         tid: payment.tid
       });
       
-      // Reload invoices and customers
+      // Reload invoices and customers with their transaction logs
       const [invoicesData, customersData] = await Promise.all([
         invoicesAPI.getAll(),
         customersAPI.getAll()
       ]);
       
+      const mappedCustomers = customersData.map(mapCustomer);
+      const customersWithLogs = await Promise.all(
+        mappedCustomers.map(async (customer: Customer) => {
+          try {
+            const transactions = await customersAPI.getTransactions(customer.id);
+            return { ...customer, logs: Array.isArray(transactions) ? transactions.map(mapTransaction) : [] };
+          } catch {
+            return customer;
+          }
+        })
+      );
+      
       setInvoices(invoicesData.map(mapInvoice));
-      setCustomers(customersData.map(mapCustomer));
+      setCustomers(customersWithLogs);
     } catch (error) {
       console.error('Error adding payment to invoice:', error);
       alert('Failed to process payment. Please try again.');
@@ -375,16 +452,28 @@ const App: React.FC = () => {
         });
       }
       
-      // Reload invoices, inventory, and customers
+      // Reload invoices, inventory, and customers with transaction logs
       const [invoicesData, inventoryData, customersData] = await Promise.all([
         invoicesAPI.getAll(),
         inventoryAPI.getAll(),
         customersAPI.getAll()
       ]);
       
+      const mappedCustomers = customersData.map(mapCustomer);
+      const customersWithLogs = await Promise.all(
+        mappedCustomers.map(async (customer: Customer) => {
+          try {
+            const transactions = await customersAPI.getTransactions(customer.id);
+            return { ...customer, logs: Array.isArray(transactions) ? transactions.map(mapTransaction) : [] };
+          } catch {
+            return customer;
+          }
+        })
+      );
+      
       setInvoices(invoicesData.map(mapInvoice));
       setInventory(inventoryData.map(mapInventoryItem));
-      setCustomers(customersData.map(mapCustomer));
+      setCustomers(customersWithLogs);
     } catch (error) {
       console.error('Error creating invoice:', error);
       alert('Failed to create invoice. Please try again.');

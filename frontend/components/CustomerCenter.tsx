@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
 import { Customer, Invoice, PaymentRecord, Transaction } from '../types';
+import { emitToast } from '../api';
 
 interface CustomerCenterProps {
   customers: Customer[];
   invoices: Invoice[];
   onReceivePayment: (invoiceId: string, payment: PaymentRecord) => void;
-  onAddCustomer: (customer: Customer) => void;
+  onAddCustomer: (customer: Customer) => Promise<Customer | null>;
 }
 
 const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, onReceivePayment, onAddCustomer }) => {
@@ -59,13 +60,13 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
     }
   };
 
-  const handleCreateCustomer = () => {
+  const handleCreateCustomer = async () => {
     if (!newCustomerData.name) {
       alert("Customer name is required.");
       return;
     }
     const customer: Customer = {
-      id: `c${Date.now()}`,
+      id: '', // Will be assigned by backend
       name: newCustomerData.name,
       contact: newCustomerData.contact,
       address: newCustomerData.address,
@@ -73,10 +74,12 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       balance: 0,
       logs: []
     };
-    onAddCustomer(customer);
+    const result = await onAddCustomer(customer);
     setIsCreatingCustomer(false);
     setNewCustomerData({ name: '', contact: '', address: '', shortDescription: '' });
-    setSelectedCustomerId(customer.id);
+    if (result) {
+      setSelectedCustomerId(result.id); // Use the ID from backend response
+    }
   };
 
   return (
