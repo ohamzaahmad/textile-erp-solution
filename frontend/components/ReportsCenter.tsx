@@ -34,9 +34,9 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
   const COLORS = ['#10b981', '#ef4444', '#3b82f6'];
 
   return (
-    <div className="space-y-6 bg-slate-100 p-4 rounded shadow-inner min-h-full">
+    <div className="space-y-6 bg-slate-100 p-4 rounded shadow-inner min-h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4">
+        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4 transition-all duration-300 hover:shadow-md hover:scale-105">
            <div className="w-12 h-12 bg-green-50 text-green-600 flex items-center justify-center rounded-full">
               <i className="fas fa-arrow-up text-xl"></i>
            </div>
@@ -45,7 +45,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
               <p className="text-xl font-bold text-slate-700">Rs. {totalSales.toLocaleString()}</p>
            </div>
         </div>
-        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4">
+        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4 transition-all duration-300 hover:shadow-md hover:scale-105">
            <div className="w-12 h-12 bg-red-50 text-red-600 flex items-center justify-center rounded-full">
               <i className="fas fa-arrow-down text-xl"></i>
            </div>

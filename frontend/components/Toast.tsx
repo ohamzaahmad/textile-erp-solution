@@ -37,8 +37,9 @@ const Toast: React.FC = () => {
           borderRadius: 8,
           color: '#fff',
           boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
-          background: t.level === 'success' ? '#16a34a' : t.level === 'info' ? '#2563eb' : '#dc2626'
-        }}>
+          background: t.level === 'success' ? '#16a34a' : t.level === 'info' ? '#2563eb' : '#dc2626',
+          animation: 'slideInRight 0.3s ease-out, fadeIn 0.3s ease-out'
+        }} className="animate-in slide-in-from-right-4 fade-in duration-300">
           <div style={{ fontWeight: 700, fontSize: 13 }}>{t.level.toUpperCase()}</div>
           <div style={{ fontSize: 13, marginTop: 4 }}>{t.message}</div>
         </div>

@@ -22,7 +22,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
     return (
       <div 
         onClick={onClick}
-        className="flex flex-col items-center cursor-pointer group transition-transform hover:scale-110"
+        className="flex flex-col items-center cursor-pointer group transition-all duration-300 ease-in-out hover:scale-110"
       >
         <div className={`w-16 h-16 flex items-center justify-center rounded-xl border-2 shadow-sm transition-all group-hover:shadow-md ${colorClasses[color]}`}>
           <i className={`fas ${icon} text-3xl`}></i>

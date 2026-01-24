@@ -18,25 +18,25 @@ const GuideCenter: React.FC = () => {
         </div>
         <div className="p-12 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-full font-black">1</div>
+            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-lg hover:scale-105">
+              <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full font-black">1</div>
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Inventory Inflow</h3>
               <p className="text-xs text-slate-500 leading-relaxed">Vendors deliver fabrics in <strong>Lots</strong>. Users "Receive Stock" to log physical meters. This creates a <strong>Pending Receipt</strong> that doesn't yet affect financial accounts.</p>
             </div>
-            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-full font-black">2</div>
+            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-lg hover:scale-105">
+              <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full font-black">2</div>
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Financial Recognition</h3>
               <p className="text-xs text-slate-500 leading-relaxed">Creating a <strong>Bill</strong> against a received Lot converts physical stock into a financial liability. Vendor balances are updated (Decreased/Negative Balance represents money we owe).</p>
             </div>
-            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center rounded-full font-black">3</div>
+            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-lg hover:scale-105">
+              <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full font-black">3</div>
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Sales & Outflow</h3>
               <p className="text-xs text-slate-500 leading-relaxed"><strong>Invoices</strong> are created for Customers. This reduces stock meters in real-time and increases Customer <strong>Receivables</strong>. Lot numbers are hidden on client invoices for privacy.</p>
             </div>
           </div>
-          <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
-            <h4 className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-2">Settlement Logic</h4>
-            <p className="text-xs text-blue-700 leading-relaxed">Every Bill and Invoice tracks its own <strong>Payment History</strong>. A document is only marked "Paid" when the total sum of payments matches the document total. Partial payments keep the document in "Partially Paid" status.</p>
+          <div className="bg-red-50 border border-red-100 p-6 rounded-2xl transition-all duration-300 hover:shadow-md">
+            <h4 className="text-[10px] font-black text-red-800 uppercase tracking-widest mb-2">Settlement Logic</h4>
+            <p className="text-xs text-red-700 leading-relaxed">Every Bill and Invoice tracks its own <strong>Payment History</strong>. A document is only marked "Paid" when the total sum of payments matches the document total. Partial payments keep the document in "Partially Paid" status.</p>
           </div>
         </div>
       </section>

@@ -538,7 +538,7 @@ const App: React.FC = () => {
           {currentUser.role === 'manager' && (
             <button 
               onClick={() => setCurrentPage('home')}
-              className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-colors ${currentPage === 'home' ? 'bg-[#7d2b3f] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
+              className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-all duration-300 ease-in-out ${currentPage === 'home' ? 'bg-[#7d2b3f] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
             >
               <i className="fas fa-home"></i> <span>Home</span>
             </button>
@@ -556,8 +556,10 @@ const App: React.FC = () => {
              )}
           </div>
         </div>
-        <main className="flex-1 overflow-auto p-8 relative bg-[#eef2f6]">
-          {renderContent()}
+        <main className="flex-1 overflow-auto p-8 relative bg-[#eef2f6] transition-all duration-300 ease-in-out">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>

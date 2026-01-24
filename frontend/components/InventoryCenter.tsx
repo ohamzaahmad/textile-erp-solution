@@ -131,7 +131,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
 
       {/* Receive Multi-Fabric Lot Modal */}
       {isReceiving && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-[#2b5797]">
             <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center space-x-2">
@@ -145,19 +145,19 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
 
             <div className="p-6 space-y-6">
               {/* Lot Header Info */}
-              <div className="grid grid-cols-2 gap-6 bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+              <div className="grid grid-cols-2 gap-6 bg-red-50/50 p-4 rounded-lg border border-red-100">
                 <div>
-                  <label className="block text-[10px] font-black text-blue-900 uppercase mb-1">Lot Number / Batch ID</label>
+                  <label className="block text-[10px] font-black text-red-900 uppercase mb-1">Lot Number / Batch ID</label>
                   <input 
                     type="text" 
                     value={lotNumber}
                     onChange={e => setLotNumber(e.target.value)}
-                    className="w-full border border-blue-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold" 
+                    className="w-full border border-red-200 rounded p-2 text-sm focus:ring-2 focus:ring-red-500 outline-none font-bold transition-all duration-200" 
                     placeholder="e.g. LOT-X99"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-blue-900 uppercase mb-1">Origin Vendor</label>
+                  <label className="block text-[10px] font-black text-red-900 uppercase mb-1">Origin Vendor</label>
                   <select 
                     value={vendorId}
                     onChange={e => setVendorId(e.target.value)}

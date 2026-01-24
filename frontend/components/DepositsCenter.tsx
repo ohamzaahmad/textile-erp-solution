@@ -27,7 +27,7 @@ const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
   const cashPayments = allPayments.filter(p => p.method === 'Cash');
 
   const PaymentTable = ({ title, payments, color }: { title: string, payments: typeof allPayments, color: string }) => (
-    <div className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden mb-6">
+    <div className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden mb-6 transition-all duration-300 hover:shadow-md">
       <div className={`px-6 py-4 border-b border-slate-100 flex justify-between items-center ${color}`}>
         <h3 className="text-sm font-black text-white uppercase tracking-widest">{title}</h3>
         <span className="text-[10px] font-black bg-white/20 text-white px-3 py-1 rounded-full">{payments.length} Transactions</span>
@@ -44,9 +44,9 @@ const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
         </thead>
         <tbody className="divide-y divide-slate-50">
           {payments.length > 0 ? payments.map(p => (
-            <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+            <tr key={p.id} className="hover:bg-slate-50 transition-colors duration-200">
               <td className="p-4 font-bold text-slate-600">{p.date}</td>
-              <td className="p-4 font-black text-[#2b5797]">{p.source}</td>
+              <td className="p-4 font-black text-[#7d2b3f]">{p.source}</td>
               <td className="p-4">
                 <span className={`px-2 py-0.5 rounded-sm font-black text-[8px] uppercase ${p.type === 'Incoming' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                   {p.type}
@@ -68,7 +68,7 @@ const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center space-x-4 mb-8">
         <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
           <i className="fas fa-building-columns text-xl"></i>

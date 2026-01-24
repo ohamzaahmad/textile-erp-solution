@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
     <aside className="w-56 bg-[#7d2b3f] text-white flex flex-col h-full shadow-xl z-20">
       <div className="p-4 bg-[#5a1f2d] border-b border-[#3d1420]">
         <h1 className="text-lg font-bold flex items-center space-x-2">
-          <i className="fas fa-tshirt"></i>
+          <i className="fas fa-leaf"></i>
           <span>HA FABRICS</span>
         </h1>
         <p className="text-[10px] opacity-70 mt-1 uppercase tracking-widest">Enterprise Edition 2024</p>
@@ -38,10 +38,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
           <button
             key={item.id}
             onClick={() => onNavigate(item.id as Page)}
-            className={`w-full flex items-center space-x-3 px-4 py-3 text-sm transition-all duration-200 ${
+            className={`w-full flex items-center space-x-3 px-4 py-3 text-sm transition-all duration-300 ease-in-out transform ${
               currentPage === item.id 
-                ? 'bg-white text-[#7d2b3f] font-semibold shadow-inner rounded-l-full ml-2' 
-                : 'hover:bg-[#9d3c52] text-red-50'
+                ? 'bg-white text-[#7d2b3f] font-semibold shadow-inner rounded-l-full ml-2 scale-105' 
+                : 'hover:bg-[#9d3c52] text-red-50 hover:translate-x-1'
             }`}
           >
             <i className={`fas ${item.icon} w-5`}></i>

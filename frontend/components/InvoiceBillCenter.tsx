@@ -196,7 +196,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
            <div className="flex justify-between items-start border-b-2 border-slate-800 pb-10 mb-10">
               <div className="flex items-center space-x-4">
                  <div className="w-16 h-16 bg-slate-900 flex items-center justify-center text-white rounded-xl">
-                   <i className="fas fa-tshirt text-3xl"></i>
+                   <i className="fas fa-leaf text-3xl"></i>
                  </div>
                  <div>
                     <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">HA FABRICS</h1>
@@ -315,7 +315,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
       {/* Settle Modal */}
       {settlingItem && (
-        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-5 text-white font-black text-sm flex justify-between items-center tracking-widest uppercase">
               <span>{type === 'Bill' ? 'Bill Payment' : 'Receive Funds'}</span>
@@ -393,7 +393,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
         {!isCreating && (
           <button 
             onClick={() => setIsCreating(true)}
-            className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all shadow-lg active:scale-95 uppercase tracking-widest"
+            className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all duration-300 ease-in-out shadow-lg active:scale-95 transform uppercase tracking-widest"
           >
             <i className="fas fa-plus mr-2"></i> Create New {type}
           </button>

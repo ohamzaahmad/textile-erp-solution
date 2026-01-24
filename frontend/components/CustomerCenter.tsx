@@ -86,7 +86,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
     <div className="flex h-full bg-[#f0f3f6] rounded border border-[#a3b6cc] overflow-hidden shadow-2xl">
       {/* Modals */}
       {isCreatingCustomer && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
               <span>Add New Customer</span>
@@ -107,7 +107,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       )}
 
       {payingInvoice && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-4 text-white font-bold text-sm flex justify-between items-center">
               <span>Receive Payment for #{payingInvoice.id}</span>
@@ -124,9 +124,9 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       {/* Sidebar */}
       <div className="w-[280px] bg-white border-r border-[#a3b6cc] flex flex-col shrink-0">
         <div className="p-4 bg-white shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold text-slate-700 uppercase">Active Customers</span>
-            <button onClick={() => setIsCreatingCustomer(true)} className="text-[10px] font-bold border border-slate-300 text-slate-600 px-3 py-1.5 rounded-sm bg-white hover:bg-slate-50 transition-colors shadow-sm">New Customer</button>
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <span className="text-[11px] font-bold text-slate-700 uppercase whitespace-nowrap">Active Customers</span>
+            <button onClick={() => setIsCreatingCustomer(true)} className="text-[10px] font-bold border border-slate-300 text-slate-600 px-3 py-1.5 rounded-sm bg-white hover:bg-slate-50 transition-all duration-200 shadow-sm whitespace-nowrap">New Customer</button>
           </div>
           <div className="relative">
             <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full text-xs p-2 pl-9 border border-[#7d2b3f]/60 rounded-sm outline-none shadow-inner" />

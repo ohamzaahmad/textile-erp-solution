@@ -39,8 +39,8 @@ const Calendar: React.FC<CalendarProps> = ({ onClose }) => {
       cells.push(
         <div 
           key={i} 
-          className={`h-10 flex items-center justify-center text-xs font-semibold rounded-full cursor-default ${
-            isToday ? 'bg-[#7d2b3f] text-white' : 'text-slate-700 hover:bg-slate-100'
+          className={`h-10 flex items-center justify-center text-xs font-semibold rounded-full cursor-default transition-all duration-200 ${
+            isToday ? 'bg-[#7d2b3f] text-white shadow-md' : 'text-slate-700 hover:bg-slate-100 hover:scale-110'
           }`}
         >
           {i}
@@ -55,16 +55,16 @@ const Calendar: React.FC<CalendarProps> = ({ onClose }) => {
     <div className="absolute top-10 right-10 w-72 bg-white rounded-lg shadow-2xl border border-slate-300 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-4">
       <div className="bg-[#7d2b3f] p-3 flex justify-between items-center text-white text-xs font-bold">
         <span>HA FABRICS Calendar</span>
-        <button onClick={onClose} className="hover:text-red-200 transition-colors"><i className="fas fa-times"></i></button>
+        <button onClick={onClose} className="hover:text-red-200 transition-all duration-200 hover:rotate-90"><i className="fas fa-times"></i></button>
       </div>
       
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
-          <button onClick={() => changeMonth(-1)} className="text-slate-400 hover:text-slate-800 transition-colors"><i className="fas fa-chevron-left"></i></button>
+          <button onClick={() => changeMonth(-1)} className="text-slate-400 hover:text-slate-800 transition-all duration-200 hover:scale-110"><i className="fas fa-chevron-left"></i></button>
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-tighter">
             {monthNames[currentMonth]} {currentYear}
           </h3>
-          <button onClick={() => changeMonth(1)} className="text-slate-400 hover:text-slate-800 transition-colors"><i className="fas fa-chevron-right"></i></button>
+          <button onClick={() => changeMonth(1)} className="text-slate-400 hover:text-slate-800 transition-all duration-200 hover:scale-110"><i className="fas fa-chevron-right"></i></button>
         </div>
 
         <div className="grid grid-cols-7 gap-1 text-center mb-2">

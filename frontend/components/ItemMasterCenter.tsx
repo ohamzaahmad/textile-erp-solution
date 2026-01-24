@@ -8,7 +8,7 @@ interface ItemMasterCenterProps {
 
 const ItemMasterCenter: React.FC<ItemMasterCenterProps> = ({ inventory }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center space-x-4 mb-8">
         <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
           <i className="fas fa-calendar-check text-xl"></i>
@@ -32,8 +32,8 @@ const ItemMasterCenter: React.FC<ItemMasterCenterProps> = ({ inventory }) => {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {inventory.length > 0 ? inventory.map(item => (
-              <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                <td className="p-5 font-black text-blue-700 font-mono">{item.lotNumber}</td>
+              <tr key={item.id} className="hover:bg-slate-50 transition-all duration-200">
+                <td className="p-5 font-black text-red-700 font-mono">{item.lotNumber}</td>
                 <td className="p-5 font-bold text-slate-700">{item.type}</td>
                 <td className="p-5 text-right font-black text-slate-800 text-lg">
                   {item.meters.toLocaleString()}m
