@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  const [pendingBillItem, setPendingBillItem] = useState<InventoryItem | null>(null);
+  const [pendingBillLot, setPendingBillLot] = useState<InventoryItem[] | null>(null);
 
   // Load data from backend when user logs in
   useEffect(() => {
@@ -253,8 +253,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleInitiateBill = (item: InventoryItem) => {
-    setPendingBillItem(item);
+  const handleInitiateBill = (lotItems: InventoryItem[]) => {
+    setPendingBillLot(lotItems);
     setCurrentPage('bills');
   };
 
@@ -309,10 +309,13 @@ const App: React.FC = () => {
         }))
       };
       
+      console.log('Creating bill with data:', backendData);
       const newBill = await billsAPI.create(backendData);
+      console.log('Bill created, response:', newBill);
       
       // If there's an initial payment, add it
-      if (billData.initialPayment) {
+      if (billData.initialPayment && newBill && newBill.id) {
+        console.log('Adding initial payment to bill:', newBill.id);
         await billsAPI.addPayment(String(newBill.id), {
           date: billData.initialPayment.date,
           amount: billData.initialPayment.amount,
@@ -345,7 +348,7 @@ const App: React.FC = () => {
       setInventory(inventoryData.map(mapInventoryItem));
       setVendors(vendorsWithLogs);
       
-      setPendingBillItem(null);
+      setPendingBillLot(null);
     } catch (error) {
       console.error('Error creating bill:', error);
       alert('Failed to create bill. Please try again.');
@@ -503,7 +506,7 @@ const App: React.FC = () => {
             vendors={vendors}
             customers={customers}
             inventory={inventory}
-            preFilledItem={currentPage === 'bills' ? pendingBillItem : null}
+            preFilledLot={currentPage === 'bills' ? pendingBillLot : null}
             onPayBill={handlePayBill}
             onReceivePayment={handleReceivePayment}
           />

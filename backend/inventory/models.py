@@ -6,7 +6,7 @@ from accounts.models import Vendor
 
 class InventoryItem(models.Model):
     """Model for inventory items (fabric lots)"""
-    lot_number = models.CharField(max_length=100, unique=True)
+    lot_number = models.CharField(max_length=100)
     fabric_type = models.CharField(max_length=255)
     meters = models.DecimalField(
         max_digits=10, 
@@ -31,6 +31,7 @@ class InventoryItem(models.Model):
     class Meta:
         db_table = 'inventory_items'
         ordering = ['-received_date', 'lot_number']
+        unique_together = [['lot_number', 'fabric_type']]
     
     def __str__(self):
         return f"{self.lot_number} - {self.fabric_type} ({self.meters}m)"

@@ -9,7 +9,7 @@ interface InvoiceBillCenterProps {
   vendors: Vendor[];
   customers: Customer[];
   inventory: InventoryItem[];
-  preFilledItem: InventoryItem | null;
+  preFilledLot: InventoryItem[] | null;
   onPayBill?: (billId: string, payment: PaymentRecord) => void;
   onReceivePayment?: (invoiceId: string, payment: PaymentRecord) => void;
 }
@@ -26,7 +26,7 @@ interface LineItem {
 const PAK_BANKS = ['Meezan Bank', 'Habib Bank (HBL)', 'Bank Alfalah'];
 
 const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({ 
-  type, items, onAdd, vendors, customers, inventory, preFilledItem, onPayBill, onReceivePayment 
+  type, items, onAdd, vendors, customers, inventory, preFilledLot, onPayBill, onReceivePayment 
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [settlingItem, setSettlingItem] = useState<any>(null);
@@ -40,6 +40,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const [creationBank, setCreationBank] = useState(PAK_BANKS[0]);
   const [creationTid, setCreationTid] = useState('');
   const [creationAmount, setCreationAmount] = useState<number>(0);
+  const [creationNotes, setCreationNotes] = useState('');
   const [currentLineItem, setCurrentLineItem] = useState({ itemId: '', meters: 0, price: 0 });
 
   // Settlement Modal States
@@ -49,19 +50,26 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const [settleTid, setSettleTid] = useState('');
 
   useEffect(() => {
-    if (preFilledItem && type === 'Bill') {
+    if (preFilledLot && preFilledLot.length > 0 && type === 'Bill') {
       setIsCreating(true);
-      setSelectedEntityId(preFilledItem.vendorId);
-      setLineItems([{
-        id: `li-${Date.now()}`,
-        itemId: preFilledItem.id,
-        meters: preFilledItem.meters,
-        price: preFilledItem.unitPrice,
-        lotNumber: preFilledItem.lotNumber,
-        type: preFilledItem.type
-      }]);
+      setSelectedEntityId(preFilledLot[0].vendorId);
+      setLineItems(preFilledLot.map(item => ({
+        id: `li-${item.id}`,
+        itemId: item.id,
+        meters: item.meters,
+        price: item.unitPrice,
+        lotNumber: item.lotNumber,
+        type: item.type
+      })));
     }
-  }, [preFilledItem, type]);
+  }, [preFilledLot, type]);
+
+  // Reset amount to 0 when Credit is selected
+  useEffect(() => {
+    if (creationMethod === 'Credit') {
+      setCreationAmount(0);
+    }
+  }, [creationMethod]);
 
   const handleAddLineItem = () => {
     if (!currentLineItem.itemId || currentLineItem.meters <= 0) {
@@ -96,12 +104,18 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       try { window.dispatchEvent(new CustomEvent('app-toast', { detail: { message: 'Initial payment cannot be negative', level: 'error' } })); } catch {}
       return;
     }
-    if (creationAmount > 0 && creationAmount > totalAmountNow) {
+    if (creationAmount > totalAmountNow) {
       try { window.dispatchEvent(new CustomEvent('app-toast', { detail: { message: 'Initial payment cannot exceed document total', level: 'error' } })); } catch {}
       return;
     }
+    
+    // For Bank method, require TID if payment amount > 0
+    if (creationMethod === 'Bank' && creationAmount > 0 && !creationTid.trim()) {
+      alert('Please enter Transaction ID for bank payment');
+      return;
+    }
 
-    const initialPayment: PaymentRecord | null = (creationMethod !== 'Credit' && creationAmount > 0) ? {
+    const initialPayment: PaymentRecord | null = (creationAmount > 0) ? {
       id: `PAY-${Date.now()}`,
       date: new Date().toISOString().slice(0, 10),
       amount: creationAmount,
@@ -119,6 +133,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       total: totalAmount,
       amountPaid: initialPayment ? creationAmount : 0,
       paymentHistory: initialPayment ? [initialPayment] : [],
+      notes: creationNotes,
       initialPayment: initialPayment // Pass for backend API call
     };
     onAdd(newItem);
@@ -132,6 +147,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
     setCreationMethod('Credit');
     setCreationAmount(0);
     setCreationTid('');
+    setCreationNotes('');
   };
 
   const handleOpenSettle = (item: any) => {
@@ -408,6 +424,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                 <div>
                   <h1 className="text-5xl font-black text-slate-200 uppercase tracking-tighter mb-1">{type}</h1>
                   <p className="text-[12px] font-black text-[#7d2b3f] tracking-widest uppercase">HA FABRICS ERP SYSTEMS</p>
+                  {type === 'Bill' && lineItems.length > 0 && (
+                    <p className="text-[14px] font-black text-slate-600 mt-2">LOT #{lineItems[0].lotNumber}</p>
+                  )}
                 </div>
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 min-w-[220px] shadow-inner">
                    <div className="flex justify-between text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest"><span>ISSUE DATE</span> <span>DOC#</span></div>
@@ -419,7 +438,8 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                  <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">{type === 'Invoice' ? 'CUSTOMER' : 'VENDOR SOURCE'}</label>
                     <select value={selectedEntityId} onChange={e => setSelectedEntityId(e.target.value)}
-                      className="w-full border-b-4 border-slate-100 py-3 text-xl font-black text-slate-800 outline-none bg-transparent hover:border-[#2b5797] transition-all"
+                      disabled={type === 'Bill' && lineItems.length > 0}
+                      className={`w-full border-b-4 border-slate-100 py-3 text-xl font-black text-slate-800 outline-none bg-transparent hover:border-[#7d2b3f] transition-all ${type === 'Bill' && lineItems.length > 0 ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                       <option value="">-- Choose Party --</option>
                       {(type === 'Invoice' ? customers : vendors).map(e => <option key={e.id} value={e.id}>{e.name} (PKR {e.balance.toLocaleString()})</option>)}
@@ -449,15 +469,56 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
                     <div className="flex items-center space-x-4 pt-3 border-t border-slate-200">
                        <label className="text-[10px] font-black text-slate-400 uppercase">Paid Now (PKR)</label>
-                       <input type="number" value={creationAmount || ''} onChange={e => setCreationAmount(parseFloat(e.target.value) || 0)}
-                         className="flex-1 text-lg font-black text-[#7d2b3f] p-3 border border-slate-300 rounded-xl bg-white shadow-inner text-right outline-none" placeholder="0.00"
+                       <input 
+                         type="number" 
+                         value={creationAmount || ''} 
+                         onChange={e => setCreationAmount(parseFloat(e.target.value) || 0)}
+                         disabled={creationMethod === 'Credit'}
+                         className={`flex-1 text-lg font-black text-[#7d2b3f] p-3 border border-slate-300 rounded-xl bg-white shadow-inner text-right outline-none ${creationMethod === 'Credit' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                         placeholder={creationMethod === 'Credit' ? 'N/A - Full Credit' : '0.00'}
                        />
                     </div>
                  </div>
               </div>
             </div>
 
-            <div className="p-0">
+            {/* DIFFERENT LAYOUTS FOR INVOICE vs BILL */}
+            {type === 'Bill' ? (
+              // BILL: READ-ONLY LOT ITEMS, NO ADD/REMOVE
+              <div className="p-0">
+                <div className="bg-[#7d2b3f]/10 p-6 border-b border-[#7d2b3f]/20">
+                  <p className="text-[11px] font-black text-[#7d2b3f] uppercase tracking-widest mb-2">
+                    <i className="fas fa-info-circle mr-2"></i> Bill for Complete Lot - Items Cannot Be Modified
+                  </p>
+                  <p className="text-[10px] text-slate-600">All fabrics in this lot will be billed together. Adjust payment method and notes below.</p>
+                </div>
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#7d2b3f] text-white">
+                    <tr>
+                      <th className="p-6 uppercase font-black tracking-widest text-[10px]">Fabric Description</th>
+                      <th className="p-6 text-right uppercase font-black tracking-widest text-[10px]">Quantity (M)</th>
+                      <th className="p-6 text-right uppercase font-black tracking-widest text-[10px]">Unit Rate</th>
+                      <th className="p-6 text-right uppercase font-black tracking-widest text-[10px]">Extension</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lineItems.map(li => (
+                      <tr key={li.id} className="border-b border-slate-100 bg-white">
+                        <td className="p-6 font-bold text-slate-700">
+                          <span className="text-[9px] bg-[#7d2b3f]/10 text-[#7d2b3f] px-2 py-1 rounded-md mr-3 font-black uppercase shadow-sm border border-[#7d2b3f]/20">{li.lotNumber}</span>
+                          {li.type}
+                        </td>
+                        <td className="p-6 text-right font-mono text-slate-600">{li.meters.toFixed(2)}m</td>
+                        <td className="p-6 text-right font-mono text-slate-600">PKR {li.price.toLocaleString()}</td>
+                        <td className="p-6 text-right font-black text-slate-800">PKR {(li.meters * li.price).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              // INVOICE: EDITABLE WITH ADD/REMOVE ITEMS
+              <div className="p-0">
                <table className="w-full text-left text-xs">
                   <thead className="bg-[#7d2b3f] text-white">
                     <tr>
@@ -471,13 +532,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                   <tbody>
                     {lineItems.map(li => (
                       <tr key={li.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td className="p-6 font-bold text-slate-700">
-                           {/* HIDE LOT NAME FOR CLIENT INVOICES */}
-                           {type !== 'Invoice' && (
-                             <span className="text-[9px] bg-blue-50 text-[#2b5797] px-2 py-1 rounded-md mr-3 font-black uppercase shadow-sm border border-blue-100">{li.lotNumber}</span>
-                           )}
-                           {li.type}
-                        </td>
+                        <td className="p-6 font-bold text-slate-700">{li.type}</td>
                         <td className="p-6 text-right font-mono text-slate-500">{li.meters.toFixed(2)}m</td>
                         <td className="p-6 text-right font-mono text-slate-500">PKR {li.price.toLocaleString()}</td>
                         <td className="p-6 text-right font-black text-slate-800">PKR {(li.meters * li.price).toLocaleString()}</td>
@@ -486,7 +541,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                         </td>
                       </tr>
                     ))}
-                    <tr className="bg-blue-50/20">
+                    <tr className="bg-slate-50/50">
                       <td className="p-6">
                         <select value={currentLineItem.itemId} onChange={e => {
                             const inv = inventory.find(i => i.id === e.target.value);
@@ -495,7 +550,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                           className="w-full border border-slate-200 rounded-xl p-3 bg-white text-[11px] font-bold shadow-sm"
                         >
                           <option value="">-- Add Fabric --</option>
-                          {availableInventory.map(i => <option key={i.id} value={i.id}>{i.lotNumber} - {i.type} ({i.meters}m avail)</option>)}
+                          {availableInventory.map(i => <option key={i.id} value={i.id}>{i.type} ({i.meters}m avail)</option>)}
                         </select>
                       </td>
                       <td className="p-6">
@@ -513,12 +568,18 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     </tr>
                   </tbody>
                </table>
-            </div>
+              </div>
+            )}
 
             <div className="p-12 flex justify-between items-start bg-slate-50/40">
                <div className="max-w-xs space-y-4">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Internal Memo</label>
-                  <textarea className="w-full h-24 border border-slate-200 rounded-xl p-4 text-xs outline-none bg-white shadow-inner resize-none" placeholder="Enter terms, conditions, or internal notes..."></textarea>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Internal Memo / Notes</label>
+                  <textarea 
+                    value={creationNotes}
+                    onChange={e => setCreationNotes(e.target.value)}
+                    className="w-full h-24 border border-slate-200 rounded-xl p-4 text-xs outline-none bg-white shadow-inner resize-none" 
+                    placeholder="Enter terms, conditions, or internal notes..."
+                  ></textarea>
                </div>
                <div className="min-w-[320px] space-y-6">
                   <div className="flex justify-between border-t border-slate-200 pt-6">

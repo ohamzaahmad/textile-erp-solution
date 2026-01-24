@@ -7,7 +7,7 @@ interface InventoryCenterProps {
   setInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>>;
   vendors: Vendor[];
   onReceive: (items: InventoryItem[]) => void;
-  onInitiateBill: (item: InventoryItem) => void;
+  onInitiateBill: (lotItems: InventoryItem[]) => void;
 }
 
 interface TempFabric {
@@ -132,10 +132,10 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
       {/* Receive Multi-Fabric Lot Modal */}
       {isReceiving && (
         <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-[#2b5797]">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-[#7d2b3f]">
             <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <i className="fas fa-truck-loading text-[#2b5797]"></i>
+                <i className="fas fa-truck-loading text-[#7d2b3f]"></i>
                 <span className="font-black text-sm text-slate-700 uppercase tracking-widest">Receive Inventory Lot</span>
               </div>
               <button onClick={() => setIsReceiving(false)} className="text-slate-400 hover:text-red-500 transition-colors">
@@ -145,23 +145,23 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
 
             <div className="p-6 space-y-6">
               {/* Lot Header Info */}
-              <div className="grid grid-cols-2 gap-6 bg-red-50/50 p-4 rounded-lg border border-red-100">
+              <div className="grid grid-cols-2 gap-6 bg-[#7d2b3f]/5 p-4 rounded-lg border border-[#7d2b3f]/20">
                 <div>
-                  <label className="block text-[10px] font-black text-red-900 uppercase mb-1">Lot Number / Batch ID</label>
+                  <label className="block text-[10px] font-black text-[#7d2b3f] uppercase mb-1">Lot Number / Batch ID</label>
                   <input 
                     type="text" 
                     value={lotNumber}
                     onChange={e => setLotNumber(e.target.value)}
-                    className="w-full border border-red-200 rounded p-2 text-sm focus:ring-2 focus:ring-red-500 outline-none font-bold transition-all duration-200" 
+                    className="w-full border border-[#7d2b3f]/30 rounded p-2 text-sm focus:ring-2 focus:ring-[#7d2b3f] outline-none font-bold transition-all duration-200" 
                     placeholder="e.g. LOT-X99"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-red-900 uppercase mb-1">Origin Vendor</label>
+                  <label className="block text-[10px] font-black text-[#7d2b3f] uppercase mb-1">Origin Vendor</label>
                   <select 
                     value={vendorId}
                     onChange={e => setVendorId(e.target.value)}
-                    className="w-full border border-blue-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 font-bold"
+                    className="w-full border border-[#7d2b3f]/30 rounded p-2 text-sm focus:ring-2 focus:ring-[#7d2b3f] font-bold"
                   >
                     {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                   </select>
@@ -231,7 +231,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                         <td className="p-2 font-bold">{f.type}</td>
                         <td className="p-2 text-right">{f.meters.toFixed(2)}m</td>
                         <td className="p-2 text-right">Rs. {f.unitPrice}</td>
-                        <td className="p-2 text-right font-black text-[#2b5797]">Rs. {(f.meters * f.unitPrice).toLocaleString()}</td>
+                        <td className="p-2 text-right font-black text-[#7d2b3f]">Rs. {(f.meters * f.unitPrice).toLocaleString()}</td>
                         <td className="p-2 text-center">
                           <button onClick={() => handleRemoveFabric(f.id)} className="text-red-400 hover:text-red-600"><i className="fas fa-trash"></i></button>
                         </td>
@@ -288,63 +288,67 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                 <React.Fragment key={lotNum}>
                   {/* Lot Header Row */}
                   <tr className="bg-slate-100 border-b-2 border-slate-300">
-                    <td className="p-3 font-black text-[#2b5797] text-sm flex items-center space-x-2">
+                    <td className="p-3 font-black text-[#7d2b3f] text-sm flex items-center space-x-2">
                        <i className="fas fa-layer-group text-slate-400"></i>
                        <span>{lotNum}</span>
                     </td>
                     <td className="p-3 italic text-slate-500">
-                       {vendor?.name} • {items[0].receivedDate}
+                       {vendor?.name} • {items[0].receivedDate} • {items.length} fabric{items.length > 1 ? 's' : ''}
                     </td>
                     <td className="p-3 text-right font-black text-slate-700">
                        {totalMeters.toFixed(2)}m
                     </td>
                     <td className="p-3 text-center">
-                       <div className="flex justify-center -space-x-1">
-                          {items.map((it, idx) => (
-                             <div key={it.id} className={`w-2 h-2 rounded-full border border-white ${it.isBilled ? 'bg-green-500' : 'bg-orange-500'}`} title={it.type}></div>
-                          ))}
-                       </div>
+                       {items.every(it => it.isBilled) ? (
+                          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight text-green-700 bg-green-100">
+                            <i className="fas fa-check-circle mr-1"></i> Billed
+                          </span>
+                       ) : (
+                          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight text-orange-700 bg-orange-100">
+                            <i className="fas fa-clock mr-1"></i> Unbilled
+                          </span>
+                       )}
                     </td>
                     <td className="p-3 text-right font-black text-slate-800">
                        Rs. {totalValue.toLocaleString()}
                     </td>
                     <td className="p-3 text-center">
-                       <button className="text-[9px] font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase">
-                        Lot Details
-                       </button>
+                       {!items.every(it => it.isBilled) ? (
+                          <button 
+                            onClick={() => onInitiateBill(items)}
+                            className="bg-[#7d2b3f] text-white px-4 py-2 rounded text-[10px] font-black hover:bg-[#5a1f2d] transition-all shadow-md uppercase tracking-wide"
+                          >
+                            <i className="fas fa-file-invoice mr-2"></i> Bill Lot
+                          </button>
+                       ) : (
+                          <span className="text-[10px] text-green-600 font-bold">
+                            <i className="fas fa-check-double mr-1"></i> Completed
+                          </span>
+                       )}
                     </td>
                   </tr>
                   {/* Fabric Item Sub-rows */}
                   {items.map(item => (
-                    <tr key={item.id} className="border-b border-slate-100 hover:bg-blue-50/30 transition-colors">
-                      <td className="p-3 pl-10 text-slate-300 italic border-l-4 border-slate-200">
+                    <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                      <td className="p-3 pl-10 text-slate-400 italic border-l-4 border-slate-200 text-[10px]">
                         #{item.id.slice(-4)}
                       </td>
-                      <td className="p-3 font-medium text-slate-700">
+                      <td className="p-3 font-bold text-slate-700">
                         {item.type}
                       </td>
                       <td className="p-3 text-right font-mono text-slate-600">
                         {item.meters.toFixed(2)}m
                       </td>
                       <td className="p-3 text-center">
-                        <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-tighter ${item.isBilled ? 'text-green-700 bg-green-100' : 'text-orange-700 bg-orange-100'}`}>
-                          {item.isBilled ? 'Billed' : 'Open Receipt'}
+                        <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-tighter ${item.isBilled ? 'text-green-700 bg-green-100' : 'text-slate-500 bg-slate-100'}`}>
+                          {item.isBilled ? 'Included' : 'Pending'}
                         </span>
                       </td>
-                      <td className="p-3 text-right text-slate-400 text-[10px]">
-                        @ Rs. {item.unitPrice} /m
+                      <td className="p-3 text-right text-slate-500 text-[11px] font-medium">
+                        @ Rs. {item.unitPrice.toLocaleString()} /m
                       </td>
-                      <td className="p-3 text-center space-x-2">
-                        {!item.isBilled ? (
-                          <button 
-                            onClick={() => onInitiateBill(item)}
-                            className="text-[9px] bg-blue-600 text-white px-2 py-1 rounded shadow hover:bg-blue-700 font-black uppercase tracking-tight"
-                          >
-                            Bill Item
-                          </button>
-                        ) : (
-                          <span className="text-[10px] text-green-500 font-bold"><i className="fas fa-check-double mr-1"></i> Recorded</span>
-                        )}
+                      <td className="p-3 text-center text-slate-400 text-[10px] italic">
+                        Part of lot
                       </td>
                     </tr>
                   ))}
