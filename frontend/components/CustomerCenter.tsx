@@ -88,7 +88,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       {isCreatingCustomer && (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="bg-[#2b5797] p-3 text-white font-bold text-sm flex justify-between items-center">
+            <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
               <span>Add New Customer</span>
               <button onClick={() => setIsCreatingCustomer(false)}><i className="fas fa-times"></i></button>
             </div>
@@ -99,7 +99,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
               <input type="text" value={newCustomerData.shortDescription} onChange={e => setNewCustomerData({...newCustomerData, shortDescription: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Short description (optional)" />
               <div className="pt-4 flex justify-end space-x-2 border-t">
                 <button onClick={() => setIsCreatingCustomer(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
-                <button onClick={handleCreateCustomer} className="px-6 py-2 text-xs font-bold bg-[#2b5797] text-white rounded">Save</button>
+                <button onClick={handleCreateCustomer} className="px-6 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save</button>
               </div>
             </div>
           </div>
@@ -109,12 +109,12 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       {payingInvoice && (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="bg-[#2b5797] p-4 text-white font-bold text-sm flex justify-between items-center">
+            <div className="bg-[#7d2b3f] p-4 text-white font-bold text-sm flex justify-between items-center">
               <span>Receive Payment for #{payingInvoice.id}</span>
               <button onClick={() => setPayingInvoice(null)}><i className="fas fa-times"></i></button>
             </div>
             <div className="p-6 space-y-5">
-              <input type="number" autoFocus value={paymentAmount} onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)} className="w-full border p-2 text-xl font-black text-blue-700 outline-none" />
+              <input type="number" autoFocus value={paymentAmount} onChange={e => setPaymentAmount(parseFloat(e.target.value) || 0)} className="w-full border p-2 text-xl font-black text-red-700 outline-none" />
               <button onClick={handleConfirmPayment} className="w-full py-3 text-xs font-black bg-green-600 text-white rounded uppercase tracking-widest shadow-lg">Confirm Payment</button>
             </div>
           </div>
@@ -129,17 +129,17 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
             <button onClick={() => setIsCreatingCustomer(true)} className="text-[10px] font-bold border border-slate-300 text-slate-600 px-3 py-1.5 rounded-sm bg-white hover:bg-slate-50 transition-colors shadow-sm">New Customer</button>
           </div>
           <div className="relative">
-            <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full text-xs p-2 pl-9 border border-[#2b5797]/60 rounded-sm outline-none shadow-inner" />
+            <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full text-xs p-2 pl-9 border border-[#7d2b3f]/60 rounded-sm outline-none shadow-inner" />
             <i className="fas fa-search absolute left-3 top-2.5 text-slate-400 text-[10px]"></i>
           </div>
         </div>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {filteredCustomers.map(c => (
-            <div key={c.id} onClick={() => setSelectedCustomerId(c.id)} className={`p-3 border-b border-[#e1e8ef] cursor-pointer transition-all flex justify-between items-center group ${selectedCustomerId === c.id ? 'bg-[#2b5797] text-white shadow-md' : 'hover:bg-slate-50'}`}>
+            <div key={c.id} onClick={() => setSelectedCustomerId(c.id)} className={`p-3 border-b border-[#e1e8ef] cursor-pointer transition-all flex justify-between items-center group ${selectedCustomerId === c.id ? 'bg-[#7d2b3f] text-white shadow-md' : 'hover:bg-slate-50'}`}>
               <div className="flex flex-col min-w-0">
-                <span className={`text-[12px] font-bold truncate ${selectedCustomerId === c.id ? 'text-white' : 'text-[#2b5797]'}`}>{c.name}</span>
-                <span className={`text-[10px] ${selectedCustomerId === c.id ? 'text-blue-100' : 'text-slate-400'}`}>{c.contact}</span>
+                <span className={`text-[12px] font-bold truncate ${selectedCustomerId === c.id ? 'text-white' : 'text-[#7d2b3f]'}`}>{c.name}</span>
+                <span className={`text-[10px] ${selectedCustomerId === c.id ? 'text-red-100' : 'text-slate-400'}`}>{c.contact}</span>
               </div>
               <span className={`text-[11px] font-black ${selectedCustomerId === c.id ? 'text-white' : (c.balance > 0 ? 'text-green-600' : 'text-slate-400')}`}>
                 {c.balance.toLocaleString()}
@@ -206,7 +206,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                           <td className="py-4 font-mono text-[10px] text-green-600">{inv.id}</td>
                           <td className="py-4 text-right text-slate-500 font-bold">Rs. {inv.total.toLocaleString()}</td>
                           <td className="py-4 text-right text-green-600 font-bold">Rs. {inv.amountPaid.toLocaleString()}</td>
-                          <td className="py-4 text-right font-black text-blue-700">Rs. {(inv.total - inv.amountPaid).toLocaleString()}</td>
+                          <td className="py-4 text-right font-black text-red-700">Rs. {(inv.total - inv.amountPaid).toLocaleString()}</td>
                           <td className="py-4 text-center">
                              <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase border ${inv.status === 'Paid' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
                                {inv.status}
@@ -241,7 +241,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                           <td className="p-4 font-bold text-slate-600">{log.date ? new Date(log.date).toLocaleDateString() : ''}</td>
                           <td className="p-4 text-slate-700">{log.description}</td>
                           <td className="p-4 font-mono text-[10px] text-green-600">#{log.referenceId}</td>
-                          <td className="p-4 text-right text-blue-600 font-bold">{log.type === 'Invoice' ? log.amount.toLocaleString() : '-'}</td>
+                          <td className="p-4 text-right text-red-600 font-bold">{log.type === 'Invoice' ? log.amount.toLocaleString() : '-'}</td>
                           <td className="p-4 text-right text-green-600 font-bold">{log.type === 'Payment' ? log.amount.toLocaleString() : '-'}</td>
                         </tr>
                       ))}

@@ -189,4 +189,4 @@ Everything is connected! You can now:
 └─────────────────┘
 ```
 
-Your TextileFlow ERP is now a full-stack application! 🎉
+Your HA FABRICS ERP is now a full-stack application! 🎉

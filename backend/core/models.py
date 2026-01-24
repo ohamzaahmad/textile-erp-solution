@@ -3,7 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
-    """Custom User model for TextileFlow ERP"""
+    """Custom User model for HA FABRICS ERP"""
     
     ROLE_CHOICES = [
         ('manager', 'Manager'),

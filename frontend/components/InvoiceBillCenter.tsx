@@ -199,7 +199,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                    <i className="fas fa-tshirt text-3xl"></i>
                  </div>
                  <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">TextileFlow</h1>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">HA FABRICS</h1>
                     <p className="text-[10px] font-black text-slate-400 tracking-[3px] uppercase">Enterprise Fabric Solutions</p>
                  </div>
               </div>
@@ -297,7 +297,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer Signature</p>
               </div>
               <div className="text-center">
-                 <p className="text-[10px] font-bold text-slate-400 italic">Thank you for choosing TextileFlow</p>
+                 <p className="text-[10px] font-bold text-slate-400 italic">Thank you for choosing HA FABRICS</p>
               </div>
               <div className="w-48 border-t border-slate-300 text-center pt-2">
                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Authorized By</p>
@@ -317,7 +317,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       {settlingItem && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-md">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="bg-[#2b5797] p-5 text-white font-black text-sm flex justify-between items-center tracking-widest uppercase">
+            <div className="bg-[#7d2b3f] p-5 text-white font-black text-sm flex justify-between items-center tracking-widest uppercase">
               <span>{type === 'Bill' ? 'Bill Payment' : 'Receive Funds'}</span>
               <button onClick={() => setSettlingItem(null)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
             </div>
@@ -325,7 +325,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-[11px] font-bold">
                 <div className="flex justify-between mb-2">
                   <span className="text-slate-400">REFERENCE</span>
-                  <span className="text-blue-700">#{settlingItem.id}</span>
+                  <span className="text-red-700">#{settlingItem.id}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-100 pt-2 text-[14px] font-black">
                   <span className="text-slate-600">PENDING</span>
@@ -341,7 +341,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                       <button 
                         key={m} 
                         onClick={() => setSettleMethod(m as PaymentMethod)}
-                        className={`flex-1 py-2 text-[10px] font-bold rounded-lg border transition-all ${settleMethod === m ? 'bg-[#2b5797] text-white border-[#2b5797]' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}`}
+                        className={`flex-1 py-2 text-[10px] font-bold rounded-lg border transition-all ${settleMethod === m ? 'bg-[#7d2b3f] text-white border-[#7d2b3f]' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'}`}
                       >
                         {m}
                       </button>
@@ -354,7 +354,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     <select value={settleBank} onChange={e => setSettleBank(e.target.value)} className="text-[10px] font-bold p-3 border border-slate-300 rounded-lg">
                       {PAK_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
                     </select>
-                    <input type="text" placeholder="TID" value={settleTid} onChange={e => setSettleTid(e.target.value)} className="text-[10px] font-bold p-3 border border-slate-300 rounded-lg outline-none focus:border-blue-500"/>
+                    <input type="text" placeholder="TID" value={settleTid} onChange={e => setSettleTid(e.target.value)} className="text-[10px] font-bold p-3 border border-slate-300 rounded-lg outline-none focus:border-red-500"/>
                   </div>
                 )}
 
@@ -363,7 +363,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                   <input 
                     type="number" autoFocus value={settleAmount}
                     onChange={e => setSettleAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full border border-slate-300 rounded-lg p-3 text-2xl font-black text-[#2b5797] shadow-inner outline-none text-right" 
+                    className="w-full border border-slate-300 rounded-lg p-3 text-2xl font-black text-[#7d2b3f] shadow-inner outline-none text-right" 
                   />
                 </div>
               </div>
@@ -382,7 +382,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       {/* Action Header */}
       <div className="p-6 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md ${type === 'Invoice' ? 'bg-green-600' : 'bg-[#2b5797]'}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md ${type === 'Invoice' ? 'bg-green-600' : 'bg-[#7d2b3f]'}`}>
             <i className={`fas ${type === 'Invoice' ? 'fa-file-invoice-dollar' : 'fa-receipt'} text-xl`}></i>
           </div>
           <div>
@@ -393,7 +393,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
         {!isCreating && (
           <button 
             onClick={() => setIsCreating(true)}
-            className="bg-[#2b5797] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#1a3a6b] transition-all shadow-lg active:scale-95 uppercase tracking-widest"
+            className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all shadow-lg active:scale-95 uppercase tracking-widest"
           >
             <i className="fas fa-plus mr-2"></i> Create New {type}
           </button>
@@ -407,7 +407,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               <div className="flex justify-between items-start mb-16">
                 <div>
                   <h1 className="text-5xl font-black text-slate-200 uppercase tracking-tighter mb-1">{type}</h1>
-                  <p className="text-[12px] font-black text-[#2b5797] tracking-widest uppercase">TEXTILEFLOW ERP SYSTEMS</p>
+                  <p className="text-[12px] font-black text-[#7d2b3f] tracking-widest uppercase">HA FABRICS ERP SYSTEMS</p>
                 </div>
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 min-w-[220px] shadow-inner">
                    <div className="flex justify-between text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest"><span>ISSUE DATE</span> <span>DOC#</span></div>
@@ -431,7 +431,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     <div className="grid grid-cols-3 gap-2">
                        {['Credit', 'Cash', 'Bank'].map(m => (
                          <button key={m} onClick={() => setCreationMethod(m as PaymentMethod)}
-                           className={`py-2 text-[10px] font-black rounded-lg border transition-all ${creationMethod === m ? 'bg-[#2b5797] text-white border-[#2b5797] shadow-md' : 'bg-white text-slate-400 border-slate-200'}`}
+                           className={`py-2 text-[10px] font-black rounded-lg border transition-all ${creationMethod === m ? 'bg-[#7d2b3f] text-white border-[#7d2b3f] shadow-md' : 'bg-white text-slate-400 border-slate-200'}`}
                          >
                            {m}
                          </button>
@@ -443,14 +443,14 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                           <select value={creationBank} onChange={e => setCreationBank(e.target.value)} className="text-[10px] font-bold p-3 border border-slate-300 rounded-lg bg-white shadow-sm">
                             {PAK_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
                           </select>
-                          <input type="text" placeholder="TID" value={creationTid} onChange={e => setCreationTid(e.target.value)} className="text-[10px] font-bold p-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-1 focus:ring-[#2b5797] shadow-sm"/>
+                          <input type="text" placeholder="TID" value={creationTid} onChange={e => setCreationTid(e.target.value)} className="text-[10px] font-bold p-3 border border-slate-300 rounded-lg bg-white outline-none focus:ring-1 focus:ring-[#7d2b3f] shadow-sm"/>
                        </div>
                     )}
 
                     <div className="flex items-center space-x-4 pt-3 border-t border-slate-200">
                        <label className="text-[10px] font-black text-slate-400 uppercase">Paid Now (PKR)</label>
                        <input type="number" value={creationAmount || ''} onChange={e => setCreationAmount(parseFloat(e.target.value) || 0)}
-                         className="flex-1 text-lg font-black text-[#2b5797] p-3 border border-slate-300 rounded-xl bg-white shadow-inner text-right outline-none" placeholder="0.00"
+                         className="flex-1 text-lg font-black text-[#7d2b3f] p-3 border border-slate-300 rounded-xl bg-white shadow-inner text-right outline-none" placeholder="0.00"
                        />
                     </div>
                  </div>
@@ -459,7 +459,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
             <div className="p-0">
                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#2b5797] text-white">
+                  <thead className="bg-[#7d2b3f] text-white">
                     <tr>
                       <th className="p-6 uppercase font-black tracking-widest text-[10px]">Fabric Description</th>
                       <th className="p-6 text-right uppercase font-black tracking-widest text-[10px]">Quantity (M)</th>
@@ -506,9 +506,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                          <input type="number" placeholder="Rate" value={currentLineItem.price || ''} onChange={e => setCurrentLineItem({...currentLineItem, price: parseFloat(e.target.value) || 0})}
                            className="w-full border border-slate-200 rounded-xl p-3 text-right bg-white text-[11px] font-bold shadow-sm" />
                       </td>
-                      <td className="p-6 text-right font-black text-[#2b5797]">PKR {(currentLineItem.meters * currentLineItem.price).toLocaleString()}</td>
+                      <td className="p-6 text-right font-black text-[#7d2b3f]">PKR {(currentLineItem.meters * currentLineItem.price).toLocaleString()}</td>
                       <td className="p-6 text-center">
-                         <button onClick={handleAddLineItem} className="w-10 h-10 rounded-full bg-[#2b5797] text-white hover:bg-[#1a3a6b] shadow-lg transition-all active:scale-90"><i className="fas fa-plus"></i></button>
+                         <button onClick={handleAddLineItem} className="w-10 h-10 rounded-full bg-[#7d2b3f] text-white hover:bg-[#5a1f2d] shadow-lg transition-all active:scale-90"><i className="fas fa-plus"></i></button>
                       </td>
                     </tr>
                   </tbody>
@@ -523,12 +523,12 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                <div className="min-w-[320px] space-y-6">
                   <div className="flex justify-between border-t border-slate-200 pt-6">
                      <span className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Document Total</span>
-                     <span className="text-4xl font-black text-[#2b5797]">PKR {totalAmount.toLocaleString()}</span>
+                     <span className="text-4xl font-black text-[#7d2b3f]">PKR {totalAmount.toLocaleString()}</span>
                   </div>
                   
                   <div className="pt-10 flex space-x-4">
                      <button onClick={resetForm} className="flex-1 py-4 text-[10px] font-black text-slate-500 border border-slate-300 rounded-xl bg-white hover:bg-slate-50 uppercase tracking-widest">Discard</button>
-                     <button onClick={handleSave} className={`flex-1 py-4 text-[10px] font-black text-white rounded-xl shadow-xl transition-all transform active:scale-95 uppercase tracking-widest ${type === 'Invoice' ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2b5797] hover:bg-[#1a3a6b]'}`}>
+                     <button onClick={handleSave} className={`flex-1 py-4 text-[10px] font-black text-white rounded-xl shadow-xl transition-all transform active:scale-95 uppercase tracking-widest ${type === 'Invoice' ? 'bg-green-600 hover:bg-green-700' : 'bg-[#7d2b3f] hover:bg-[#5a1f2d]'}`}>
                         Post Entry
                      </button>
                   </div>
@@ -579,11 +579,11 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     </td>
                     <td className="p-5 text-center flex items-center justify-center space-x-6">
                       {item.status !== 'Paid' && (
-                        <button onClick={() => handleOpenSettle(item)} className={`text-[9px] text-white px-4 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-md transition-all active:scale-95 ${type === 'Bill' ? 'bg-[#2b5797] hover:bg-[#1a3a6b]' : 'bg-green-600 hover:bg-green-700'}`}>
+                        <button onClick={() => handleOpenSettle(item)} className={`text-[9px] text-white px-4 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-md transition-all active:scale-95 ${type === 'Bill' ? 'bg-[#7d2b3f] hover:bg-[#5a1f2d]' : 'bg-green-600 hover:bg-green-700'}`}>
                           Settle
                         </button>
                       )}
-                      <button onClick={() => handlePrint(item)} className="text-slate-400 hover:text-blue-600 transition-colors text-lg"><i className="fas fa-print"></i></button>
+                      <button onClick={() => handlePrint(item)} className="text-slate-400 hover:text-red-600 transition-colors text-lg"><i className="fas fa-print"></i></button>
                     </td>
                   </tr>
                   

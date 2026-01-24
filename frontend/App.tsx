@@ -538,7 +538,7 @@ const App: React.FC = () => {
           {currentUser.role === 'manager' && (
             <button 
               onClick={() => setCurrentPage('home')}
-              className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-colors ${currentPage === 'home' ? 'bg-[#2b5797] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
+              className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-colors ${currentPage === 'home' ? 'bg-[#7d2b3f] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
             >
               <i className="fas fa-home"></i> <span>Home</span>
             </button>
@@ -547,10 +547,10 @@ const App: React.FC = () => {
             {currentPage.replace(/([A-Z])/g, ' $1')} Center
           </div>
           <div className="flex-1 flex justify-end items-center text-[10px] font-black text-slate-400 uppercase space-x-4">
-             <span><i className="fas fa-user-circle mr-1 text-blue-400"></i> {currentUser.name}</span>
+             <span><i className="fas fa-user-circle mr-1 text-red-400"></i> {currentUser.name}</span>
              <span className="bg-slate-200 px-2 py-0.5 rounded text-slate-600 border border-slate-300">{currentUser.role}</span>
              {isLoading && (
-               <span className="flex items-center text-blue-600">
+               <span className="flex items-center text-red-600">
                  <i className="fas fa-sync fa-spin mr-2"></i> Loading...
                </span>
              )}

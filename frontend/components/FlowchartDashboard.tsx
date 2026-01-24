@@ -11,9 +11,9 @@ interface FlowchartDashboardProps {
 }
 
 const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, financialSummary }) => {
-  const FlowIcon = ({ icon, label, onClick, color = "blue" }: { icon: string, label: string, onClick?: () => void, color?: string }) => {
+  const FlowIcon = ({ icon, label, onClick, color = "maroon" }: { icon: string, label: string, onClick?: () => void, color?: string }) => {
     const colorClasses: Record<string, string> = {
-      blue: "text-blue-600 bg-blue-50 border-blue-200 hover:border-blue-400",
+      maroon: "text-red-600 bg-red-50 border-red-200 hover:border-red-400",
       green: "text-green-600 bg-green-50 border-green-200 hover:border-green-400",
       yellow: "text-yellow-600 bg-yellow-50 border-yellow-200 hover:border-yellow-400",
       purple: "text-purple-600 bg-purple-50 border-purple-200 hover:border-purple-400",
@@ -27,7 +27,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className={`w-16 h-16 flex items-center justify-center rounded-xl border-2 shadow-sm transition-all group-hover:shadow-md ${colorClasses[color]}`}>
           <i className={`fas ${icon} text-3xl`}></i>
         </div>
-        <span className="mt-3 text-[11px] font-bold text-slate-600 text-center max-w-[90px] leading-tight group-hover:text-blue-700 uppercase tracking-tighter">
+        <span className="mt-3 text-[11px] font-bold text-slate-600 text-center max-w-[90px] leading-tight group-hover:text-red-700 uppercase tracking-tighter">
           {label}
         </span>
       </div>
@@ -45,28 +45,28 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         
         {/* Vendors Section */}
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
-          <div className="absolute -top-3 left-8 bg-[#2b5797] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Vendor Workflow</div>
+          <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Vendor Workflow</div>
           <div className="flex items-center justify-around">
             {/* Purchase Orders Removed as requested */}
             <FlowIcon icon="fa-dolly" label="Receive Inventory" color="green" onClick={() => onNavigate('inventory')} />
             <Arrow />
-            <FlowIcon icon="fa-file-invoice" label="Enter Bills" color="blue" onClick={() => onNavigate('bills')} />
+            <FlowIcon icon="fa-file-invoice" label="Enter Bills" color="maroon" onClick={() => onNavigate('bills')} />
             <Arrow />
-            <FlowIcon icon="fa-credit-card" label="Pay Bills" color="blue" onClick={() => onNavigate('vendors')} />
+            <FlowIcon icon="fa-credit-card" label="Pay Bills" color="maroon" onClick={() => onNavigate('vendors')} />
           </div>
         </div>
 
         {/* Customers Section */}
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
-          <div className="absolute -top-3 left-8 bg-[#2b5797] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Customer Workflow</div>
+          <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Customer Workflow</div>
           <div className="flex flex-col space-y-8">
             <div className="flex items-center justify-around px-12">
-               <FlowIcon icon="fa-file-invoice-dollar" label="Create Invoices" color="blue" onClick={() => onNavigate('invoices')} />
+               <FlowIcon icon="fa-file-invoice-dollar" label="Create Invoices" color="maroon" onClick={() => onNavigate('invoices')} />
                <Arrow className="mx-8" />
                <FlowIcon icon="fa-hand-holding-dollar" label="Receive Payments" color="green" onClick={() => onNavigate('customers')} />
                <Arrow className="mx-8" />
                {/* Record Deposits now links to a specific view aggregation */}
-               <FlowIcon icon="fa-building-columns" label="Record Deposits" color="blue" onClick={() => onNavigate('deposits')} />
+               <FlowIcon icon="fa-building-columns" label="Record Deposits" color="maroon" onClick={() => onNavigate('deposits')} />
             </div>
           </div>
         </div>
@@ -75,10 +75,10 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
           <div className="absolute -top-3 left-8 bg-[#5a6b85] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Inventory Management</div>
           <div className="flex items-center justify-around">
-            <FlowIcon icon="fa-boxes-stacked" label="Inventory Center" color="blue" onClick={() => onNavigate('inventory')} />
-            <FlowIcon icon="fa-chart-pie" label="Stock Reports" color="blue" onClick={() => onNavigate('reports')} />
+            <FlowIcon icon="fa-boxes-stacked" label="Inventory Center" color="maroon" onClick={() => onNavigate('inventory')} />
+            <FlowIcon icon="fa-chart-pie" label="Stock Reports" color="maroon" onClick={() => onNavigate('reports')} />
             {/* Item Master now links to a detailed fabric list */}
-            <FlowIcon icon="fa-calendar-check" label="Item Master" color="blue" onClick={() => onNavigate('itemMaster')} />
+            <FlowIcon icon="fa-calendar-check" label="Item Master" color="maroon" onClick={() => onNavigate('itemMaster')} />
             {/* Adjust Quantity Removed as requested */}
           </div>
         </div>
@@ -87,7 +87,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
       {/* Right Column Summary */}
       <div className="space-y-6">
         <div className="bg-white rounded-xl border border-slate-300 overflow-hidden shadow-sm">
-          <div className="bg-[#2b5797] px-4 py-3 text-white text-[11px] font-black flex justify-between items-center tracking-widest uppercase">
+          <div className="bg-[#7d2b3f] px-4 py-3 text-white text-[11px] font-black flex justify-between items-center tracking-widest uppercase">
             <span>FINANCIAL SUMMARY</span>
           </div>
           <div className="p-5 space-y-4">
@@ -108,7 +108,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
                   </div>
                   <div className="pt-2 flex justify-between items-center text-[12px] font-black bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <span className="text-slate-700 uppercase">Net Position</span>
-                    <span className="text-[#2b5797]">{fmt.format(net)}</span>
+                    <span className="text-[#7d2b3f]">{fmt.format(net)}</span>
                   </div>
                 </>
               );
@@ -116,12 +116,12 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
           </div>
         </div>
         
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 text-[11px] shadow-sm">
-          <h4 className="font-black text-blue-800 mb-2 flex items-center uppercase tracking-tighter">
-            <i className="fas fa-lightbulb mr-2 text-blue-500"></i>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-[11px] shadow-sm">
+          <h4 className="font-black text-red-800 mb-2 flex items-center uppercase tracking-tighter">
+            <i className="fas fa-lightbulb mr-2 text-red-500"></i>
             Workflow Advice
           </h4>
-          <p className="text-blue-700 leading-relaxed font-medium">Use the <strong className="text-blue-900">Create Invoice</strong> screen to sell inventory. The system will track partial payments and update customer balances in real-time.</p>
+          <p className="text-red-700 leading-relaxed font-medium">Use the <strong className="text-red-900">Create Invoice</strong> screen to sell inventory. The system will track partial payments and update customer balances in real-time.</p>
         </div>
       </div>
     </div>

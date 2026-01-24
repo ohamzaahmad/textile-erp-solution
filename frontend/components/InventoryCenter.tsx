@@ -100,11 +100,11 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
       {/* Header Bar */}
       <div className="p-4 bg-slate-50 border-b border-slate-300 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-[#2b5797] text-white flex items-center justify-center rounded-lg shadow-inner">
+          <div className="w-10 h-10 bg-[#7d2b3f] text-white flex items-center justify-center rounded-lg shadow-inner">
             <i className="fas fa-boxes-stacked text-xl"></i>
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[#2b5797] tracking-tight">Stock Management</h2>
+            <h2 className="text-lg font-bold text-[#7d2b3f] tracking-tight">Stock Management</h2>
             <p className="text-[10px] text-slate-500 uppercase font-black">Multi-Fabric Lot Tracking System</p>
           </div>
         </div>
@@ -116,7 +116,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                 placeholder="Find lot or fabric..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-xs p-2 pl-9 border border-slate-300 rounded outline-none w-64 shadow-inner focus:border-blue-500 transition-all"
+                className="text-xs p-2 pl-9 border border-slate-300 rounded outline-none w-64 shadow-inner focus:border-red-500 transition-all"
              />
              <i className="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs transition-colors group-focus-within:text-blue-500"></i>
           </div>
@@ -204,7 +204,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                     </div>
                     <button 
                       onClick={handleAddFabricToLot}
-                      className="bg-[#2b5797] text-white p-2 rounded hover:bg-[#1a3a6b] h-[34px] transition-colors"
+                      className="bg-[#7d2b3f] text-white p-2 rounded hover:bg-[#5a1f2d] h-[34px] transition-colors"
                       title="Add to List"
                     >
                       <i className="fas fa-plus"></i>
@@ -267,7 +267,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
       {/* Grouped Table Display */}
       <div className="flex-1 overflow-auto bg-slate-50 custom-scrollbar">
         <table className="w-full text-left text-xs border-separate border-spacing-0">
-          <thead className="bg-[#2b5797] text-white sticky top-0 z-20 shadow-md">
+          <thead className="bg-[#7d2b3f] text-white sticky top-0 z-20 shadow-md">
             <tr>
               <th className="p-3 w-48 font-black uppercase tracking-widest">Lot Info</th>
               <th className="p-3 font-black uppercase tracking-widest">Fabric Description</th>

@@ -21,7 +21,7 @@ const ItemMasterCenter: React.FC<ItemMasterCenterProps> = ({ inventory }) => {
 
       <div className="bg-white rounded-xl border border-slate-300 shadow-xl overflow-hidden">
         <table className="w-full text-left text-xs">
-          <thead className="bg-[#2b5797] text-white">
+          <thead className="bg-[#7d2b3f] text-white">
             <tr className="uppercase font-black text-[10px] tracking-widest">
               <th className="p-5">Lot Number</th>
               <th className="p-5">Fabric Name</th>

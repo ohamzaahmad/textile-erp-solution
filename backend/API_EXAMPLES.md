@@ -1,6 +1,6 @@
-# TextileFlow ERP - API Examples
+# HA FABRICS ERP - API Examples
 
-This document provides practical examples for using the TextileFlow ERP API.
+This document provides practical examples for using the HA FABRICS ERP API.
 
 ## Table of Contents
 1. [Authentication](#authentication)

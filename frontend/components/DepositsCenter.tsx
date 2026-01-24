@@ -70,7 +70,7 @@ const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4 mb-8">
-        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+        <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
           <i className="fas fa-building-columns text-xl"></i>
         </div>
         <div>
@@ -79,7 +79,7 @@ const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
         </div>
       </div>
 
-      <PaymentTable title="Bank Transactions" payments={bankPayments} color="bg-blue-600" />
+      <PaymentTable title="Bank Transactions" payments={bankPayments} color="bg-red-600" />
       <PaymentTable title="Cash Transactions" payments={cashPayments} color="bg-green-600" />
     </div>
   );

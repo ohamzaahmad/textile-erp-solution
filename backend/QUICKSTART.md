@@ -1,4 +1,4 @@
-# TextileFlow ERP Backend - Quick Start Guide
+# HA FABRICS ERP Backend - Quick Start Guide
 
 ## 🚀 Quick Setup
 

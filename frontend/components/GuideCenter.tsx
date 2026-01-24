@@ -6,12 +6,12 @@ const GuideCenter: React.FC = () => {
     <div className="max-w-5xl mx-auto space-y-12 pb-24 animate-in fade-in duration-500">
       <div className="text-center space-y-4">
         <h1 className="text-5xl font-black text-slate-800 tracking-tighter uppercase">System Blueprint</h1>
-        <p className="text-slate-500 font-medium max-w-2xl mx-auto">Complete guide to workflow logic, entity relationships, and technical backend architecture for TextileFlow ERP.</p>
+        <p className="text-slate-500 font-medium max-w-2xl mx-auto">Complete guide to workflow logic, entity relationships, and technical backend architecture for HA FABRICS ERP.</p>
       </div>
 
       {/* 1. Overall Workflow */}
       <section className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-        <div className="bg-[#2b5797] p-8 text-white">
+        <div className="bg-[#7d2b3f] p-8 text-white">
           <h2 className="text-2xl font-black uppercase tracking-widest flex items-center">
             <i className="fas fa-project-diagram mr-4"></i> Core Operational Workflow
           </h2>

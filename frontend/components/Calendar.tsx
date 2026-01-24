@@ -40,7 +40,7 @@ const Calendar: React.FC<CalendarProps> = ({ onClose }) => {
         <div 
           key={i} 
           className={`h-10 flex items-center justify-center text-xs font-semibold rounded-full cursor-default ${
-            isToday ? 'bg-[#2b5797] text-white' : 'text-slate-700 hover:bg-slate-100'
+            isToday ? 'bg-[#7d2b3f] text-white' : 'text-slate-700 hover:bg-slate-100'
           }`}
         >
           {i}
@@ -53,8 +53,8 @@ const Calendar: React.FC<CalendarProps> = ({ onClose }) => {
 
   return (
     <div className="absolute top-10 right-10 w-72 bg-white rounded-lg shadow-2xl border border-slate-300 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-4">
-      <div className="bg-[#2b5797] p-3 flex justify-between items-center text-white text-xs font-bold">
-        <span>TextileFlow Calendar</span>
+      <div className="bg-[#7d2b3f] p-3 flex justify-between items-center text-white text-xs font-bold">
+        <span>HA FABRICS Calendar</span>
         <button onClick={onClose} className="hover:text-red-200 transition-colors"><i className="fas fa-times"></i></button>
       </div>
       

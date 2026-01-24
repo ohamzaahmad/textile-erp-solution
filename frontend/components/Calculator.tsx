@@ -141,15 +141,15 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
   return (
     <div className="absolute top-10 right-10 w-80 bg-slate-900 rounded-2xl shadow-2xl border border-slate-700 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-4 flex flex-col ring-1 ring-white/10">
       {/* Title Bar */}
-      <div className="bg-[#1a3a6b] p-3 flex justify-between items-center text-white text-[10px] font-black uppercase tracking-widest border-b border-[#0e2544]">
+      <div className="bg-[#5a1f2d] p-3 flex justify-between items-center text-white text-[10px] font-black uppercase tracking-widest border-b border-[#3d1420]">
         <div className="flex items-center space-x-2">
-          <i className="fas fa-calculator text-blue-400"></i>
+          <i className="fas fa-calculator text-red-400"></i>
           <span>ERP Advanced Calc</span>
         </div>
         <div className="flex items-center space-x-3">
           <button 
             onClick={() => setShowHistory(!showHistory)}
-            className={`transition-all p-1.5 rounded-md ${showHistory ? 'text-blue-300 bg-white/10 shadow-inner' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+            className={`transition-all p-1.5 rounded-md ${showHistory ? 'text-red-300 bg-white/10 shadow-inner' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
             title="Calculation History"
           >
             <i className="fas fa-history"></i>
@@ -162,10 +162,10 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
 
       {/* Screen Area */}
       <div className="p-5 bg-slate-950 flex flex-col justify-end items-end h-36 border-b border-slate-800 shadow-inner">
-        <div className="text-[11px] font-mono text-blue-500/60 h-5 mb-1 uppercase tracking-widest overflow-hidden">
+        <div className="text-[11px] font-mono text-red-500/60 h-5 mb-1 uppercase tracking-widest overflow-hidden">
           {equation || (prevValue !== null ? `${prevValue} ${operation}` : '')}
         </div>
-        <div className="text-5xl font-mono text-blue-400 overflow-hidden truncate max-w-full tracking-tighter transition-all duration-150">
+        <div className="text-5xl font-mono text-red-400 overflow-hidden truncate max-w-full tracking-tighter transition-all duration-150">
           {parseFloat(display).toLocaleString(undefined, { maximumFractionDigits: 8 })}
         </div>
       </div>
@@ -176,7 +176,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
           <p className="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-[2px]">Audit Trail / History</p>
           <div className="space-y-2">
             {history.map((h, i) => (
-              <div key={i} className="text-[10px] font-mono text-blue-300/80 bg-slate-900/60 p-2 rounded-lg border border-slate-700/50 flex justify-between items-center group cursor-pointer hover:bg-slate-900 transition-colors"
+              <div key={i} className="text-[10px] font-mono text-red-300/80 bg-slate-900/60 p-2 rounded-lg border border-slate-700/50 flex justify-between items-center group cursor-pointer hover:bg-slate-900 transition-colors"
                 onClick={() => {
                   const result = h.split('=')[1].trim();
                   setDisplay(result);
@@ -184,7 +184,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
                 }}
               >
                 <span>{h.split('=')[0]}</span>
-                <span className="font-black text-blue-400">= {h.split('=')[1]}</span>
+                <span className="font-black text-red-400">= {h.split('=')[1]}</span>
               </div>
             ))}
             {history.length === 0 && <p className="text-[10px] text-slate-600 italic text-center py-2">History is empty</p>}
@@ -207,23 +207,23 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
         <button onClick={() => handleScientific('percent')} className="py-3.5 bg-slate-800 text-slate-300 text-xs font-black rounded-xl hover:bg-slate-700 transition-all border border-slate-700/30 active:scale-95 shadow-sm">%</button>
         <button onClick={clear} className="py-3.5 bg-red-900/20 text-red-400 text-xs font-black rounded-xl hover:bg-red-900/40 transition-all border border-red-900/20 active:scale-95">C</button>
         <button onClick={backspace} className="py-3.5 bg-slate-800 text-slate-300 text-xs font-black rounded-xl hover:bg-slate-700 transition-all border border-slate-700/30 active:scale-95"><i className="fas fa-backspace"></i></button>
-        <button onClick={() => handleOperator('/')} className={`py-3.5 rounded-xl font-black text-sm transition-all shadow-lg active:scale-95 ${activeKey === '/' || operation === '/' ? 'bg-blue-600 text-white' : 'bg-[#2b5797] text-blue-100 hover:bg-[#1a3a6b]'}`}>÷</button>
+        <button onClick={() => handleOperator('/')} className={`py-3.5 rounded-xl font-black text-sm transition-all shadow-lg active:scale-95 ${activeKey === '/' || operation === '/' ? 'bg-red-600 text-white' : 'bg-[#7d2b3f] text-red-100 hover:bg-[#5a1f2d]'}`}>÷</button>
 
         {/* Digit Grid */}
         <button onClick={() => handleDigit('7')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '7' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>7</button>
         <button onClick={() => handleDigit('8')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '8' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>8</button>
         <button onClick={() => handleDigit('9')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '9' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>9</button>
-        <button onClick={() => handleOperator('*')} className={`py-5 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 ${activeKey === '*' || operation === '*' ? 'bg-blue-600 text-white' : 'bg-[#2b5797] text-blue-100 hover:bg-[#1a3a6b]'}`}>×</button>
+        <button onClick={() => handleOperator('*')} className={`py-5 rounded-xl font-black text-lg transition-all shadow-lg active:scale-95 ${activeKey === '*' || operation === '*' ? 'bg-red-600 text-white' : 'bg-[#7d2b3f] text-red-100 hover:bg-[#5a1f2d]'}`}>×</button>
 
         <button onClick={() => handleDigit('4')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '4' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>4</button>
         <button onClick={() => handleDigit('5')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '5' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>5</button>
         <button onClick={() => handleDigit('6')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '6' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>6</button>
-        <button onClick={() => handleOperator('-')} className={`py-5 rounded-xl font-black text-xl transition-all shadow-lg active:scale-95 ${activeKey === '-' || operation === '-' ? 'bg-blue-600 text-white' : 'bg-[#2b5797] text-blue-100 hover:bg-[#1a3a6b]'}`}>−</button>
+        <button onClick={() => handleOperator('-')} className={`py-5 rounded-xl font-black text-xl transition-all shadow-lg active:scale-95 ${activeKey === '-' || operation === '-' ? 'bg-red-600 text-white' : 'bg-[#7d2b3f] text-red-100 hover:bg-[#5a1f2d]'}`}>−</button>
 
         <button onClick={() => handleDigit('1')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '1' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>1</button>
         <button onClick={() => handleDigit('2')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '2' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>2</button>
         <button onClick={() => handleDigit('3')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '3' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>3</button>
-        <button onClick={() => handleOperator('+')} className={`py-5 rounded-xl font-black text-xl transition-all shadow-lg active:scale-95 ${activeKey === '+' || operation === '+' ? 'bg-blue-600 text-white' : 'bg-[#2b5797] text-blue-100 hover:bg-[#1a3a6b]'}`}>+</button>
+        <button onClick={() => handleOperator('+')} className={`py-5 rounded-xl font-black text-xl transition-all shadow-lg active:scale-95 ${activeKey === '+' || operation === '+' ? 'bg-red-600 text-white' : 'bg-[#7d2b3f] text-red-100 hover:bg-[#5a1f2d]'}`}>+</button>
 
         <button onClick={() => handleScientific('negate')} className="py-5 bg-slate-800 text-white font-black text-lg rounded-xl hover:bg-slate-700 transition-all border border-slate-700/30 active:scale-95">±</button>
         <button onClick={() => handleDigit('0')} className={`py-5 bg-slate-800 text-white font-black text-lg rounded-xl transition-all border border-slate-700/30 active:scale-95 ${activeKey === '0' ? 'bg-slate-600 scale-95' : 'hover:bg-slate-700'}`}>0</button>
