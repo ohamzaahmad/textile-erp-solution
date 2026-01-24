@@ -41,6 +41,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const [creationTid, setCreationTid] = useState('');
   const [creationAmount, setCreationAmount] = useState<number>(0);
   const [creationNotes, setCreationNotes] = useState('');
+  const [creationDueDate, setCreationDueDate] = useState('');
   const [currentLineItem, setCurrentLineItem] = useState({ itemId: '', meters: 0, price: 0 });
 
   // Settlement Modal States
@@ -128,7 +129,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       id: `${type.slice(0, 3)}-${Date.now()}`,
       [type === 'Invoice' ? 'customerId' : 'vendorId']: selectedEntityId,
       date: new Date().toISOString().slice(0, 10),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      dueDate: creationDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       items: lineItems.map(li => ({ itemId: li.itemId, meters: li.meters, price: li.price })),
       total: totalAmount,
       amountPaid: initialPayment ? creationAmount : 0,
@@ -148,6 +149,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
     setCreationAmount(0);
     setCreationTid('');
     setCreationNotes('');
+    setCreationDueDate('');
   };
 
   const handleOpenSettle = (item: any) => {
@@ -190,6 +192,18 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const availableInventory = type === 'Bill' 
     ? inventory.filter(i => !i.isBilled && (selectedEntityId ? i.vendorId === selectedEntityId : true))
     : inventory.filter(i => i.meters > 0);
+
+  // Sort items: overdue first, then by date
+  const sortedItems = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return [...items].sort((a, b) => {
+      const aOverdue = a.status !== 'Paid' && a.dueDate && a.dueDate < today;
+      const bOverdue = b.status !== 'Paid' && b.dueDate && b.dueDate < today;
+      if (aOverdue && !bOverdue) return -1;
+      if (!aOverdue && bOverdue) return 1;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, [items]);
 
   const PrintView = ({ doc }: { doc: any }) => {
     const entity = type === 'Invoice' 
@@ -573,13 +587,26 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
             <div className="p-12 flex justify-between items-start bg-slate-50/40">
                <div className="max-w-xs space-y-4">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Internal Memo / Notes</label>
-                  <textarea 
-                    value={creationNotes}
-                    onChange={e => setCreationNotes(e.target.value)}
-                    className="w-full h-24 border border-slate-200 rounded-xl p-4 text-xs outline-none bg-white shadow-inner resize-none" 
-                    placeholder="Enter terms, conditions, or internal notes..."
-                  ></textarea>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Due Date</label>
+                    <input 
+                      type="date"
+                      value={creationDueDate}
+                      onChange={e => setCreationDueDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 10)}
+                      className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none bg-white shadow-inner font-bold"
+                    />
+                    <p className="text-[9px] text-slate-400 mt-1 italic">Leave empty for 30 days from today</p>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Internal Memo / Notes</label>
+                    <textarea 
+                      value={creationNotes}
+                      onChange={e => setCreationNotes(e.target.value)}
+                      className="w-full h-24 border border-slate-200 rounded-xl p-4 text-xs outline-none bg-white shadow-inner resize-none" 
+                      placeholder="Enter terms, conditions, or internal notes..."
+                    ></textarea>
+                  </div>
                </div>
                <div className="min-w-[320px] space-y-6">
                   <div className="flex justify-between border-t border-slate-200 pt-6">
@@ -604,6 +631,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               <tr>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Doc #</th>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Date</th>
+                <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Due Date</th>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">{type === 'Invoice' ? 'Customer' : 'Supplier'}</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Settlement Log</th>
                 <th className="p-5 text-right font-black text-slate-500 uppercase tracking-widest">Total Amount</th>
@@ -612,11 +640,21 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {items.map((item: any) => (
+              {sortedItems.map((item: any) => {
+                const today = new Date().toISOString().slice(0, 10);
+                const isOverdue = item.status !== 'Paid' && item.dueDate && item.dueDate < today;
+                return (
                 <React.Fragment key={item.id}>
-                  <tr className="hover:bg-slate-50 transition-colors">
-                    <td className={`p-5 font-black font-mono text-[10px] ${type === 'Invoice' ? 'text-green-700' : 'text-[#2b5797]'}`}>{item.id}</td>
+                  <tr className={`hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}>
+                    <td className={`p-5 font-black font-mono text-[10px] ${type === 'Invoice' ? 'text-green-700' : 'text-[#2b5797]'}`}>
+                      {isOverdue && <i className="fas fa-exclamation-triangle text-red-600 mr-2" title="Overdue"></i>}
+                      {item.id}
+                    </td>
                     <td className="p-5 text-slate-600 font-bold">{item.date ? new Date(item.date).toLocaleDateString() : ''}</td>
+                    <td className={`p-5 font-bold ${isOverdue ? 'text-red-600' : 'text-slate-600'}`}>
+                      {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : 'N/A'}
+                      {isOverdue && <span className="ml-2 text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full uppercase font-black">Overdue</span>}
+                    </td>
                     <td className="p-5 font-black text-slate-800 uppercase tracking-tighter">
                       {type === 'Invoice' ? customers.find(c => c.id === item.customerId)?.name : vendors.find(v => v.id === item.vendorId)?.name}
                     </td>
@@ -651,7 +689,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                   {/* Expanded Payment Log Section */}
                   {expandedDocId === item.id && (
                     <tr>
-                      <td colSpan={7} className="p-0 bg-blue-50/20 border-l-4 border-[#2b5797]">
+                      <td colSpan={8} className="p-0 bg-blue-50/20 border-l-4 border-[#2b5797]">
                          <div className="p-5 animate-in slide-in-from-top-2 duration-300">
                             <div className="bg-white rounded-xl border border-blue-100 overflow-hidden shadow-inner">
                                <div className="bg-blue-50 px-4 py-2 text-[10px] font-black text-[#2b5797] uppercase tracking-widest flex justify-between">
@@ -691,9 +729,10 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     </tr>
                   )}
                 </React.Fragment>
-              ))}
+              );
+              })}
               {items.length === 0 && (
-                <tr><td colSpan={7} className="p-40 text-center text-slate-300 italic uppercase font-black opacity-30 tracking-[10px]">No Documents Found</td></tr>
+                <tr><td colSpan={8} className="p-40 text-center text-slate-300 italic uppercase font-black opacity-30 tracking-[10px]">No Documents Found</td></tr>
               )}
             </tbody>
           </table>
