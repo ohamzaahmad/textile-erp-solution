@@ -63,7 +63,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
 
   const handleCreateVendor = async () => {
     if (!newVendorData.name) {
-      alert("Vendor name is required.");
+      alert("Supplier name is required.");
       return;
     }
     const vendor: Vendor = {
@@ -90,13 +90,13 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
-              <span>Add New Vendor</span>
+              <span>Add New Supplier</span>
               <button onClick={() => setIsCreatingVendor(false)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Vendor Name</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Supplier Name</label>
                   <input type="text" value={newVendorData.name} onChange={e => setNewVendorData({...newVendorData, name: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" placeholder="Enter company name" />
                 </div>
                 <div>
@@ -114,7 +114,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
               </div>
               <div className="pt-4 flex justify-end space-x-3 border-t">
                 <button onClick={() => setIsCreatingVendor(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
-                <button onClick={handleCreateVendor} className="px-6 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save Vendor</button>
+                <button onClick={handleCreateVendor} className="px-6 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save Supplier</button>
               </div>
             </div>
           </div>
@@ -126,7 +126,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-4 text-white font-bold text-sm flex justify-between items-center">
-              <span>Settle Bill #{payingBill.id}</span>
+              <span>Settle Purchase #{payingBill.id}</span>
               <button onClick={() => setPayingBill(null)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
             </div>
             <div className="p-6 space-y-5">
@@ -145,7 +145,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
         <div className="p-4 bg-white shadow-sm">
           <div className="flex items-center justify-between mb-3 gap-2">
             <span className="text-[11px] font-bold text-slate-700 uppercase whitespace-nowrap">Active Vendors</span>
-            <button onClick={() => setIsCreatingVendor(true)} className="text-[10px] font-bold border border-slate-300 text-slate-600 px-3 py-1.5 rounded-sm bg-white hover:bg-slate-50 transition-all duration-200 shadow-sm whitespace-nowrap">New Vendor</button>
+            <button onClick={() => setIsCreatingVendor(true)} className="text-[10px] font-bold border border-slate-300 text-slate-600 px-3 py-1.5 rounded-sm bg-white hover:bg-slate-50 transition-all duration-200 shadow-sm whitespace-nowrap">New Supplier</button>
           </div>
           <div className="relative">
             <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full text-xs p-2 pl-9 border border-[#7d2b3f]/60 rounded-sm outline-none shadow-inner" />
@@ -176,7 +176,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
           <>
             <div className="p-10 border-b border-[#e1e8ef] bg-white flex justify-between items-start">
               <div className="space-y-3">
-                <h2 className="text-4xl font-light text-slate-400 tracking-tight">Vendor Information</h2>
+                <h2 className="text-4xl font-light text-slate-400 tracking-tight">Supplier Information</h2>
                 <div className="pt-2">
                    <p className="text-xl font-bold text-slate-800 uppercase tracking-tighter">{selectedVendor.name}</p>
                    <p className="text-sm text-slate-500 font-medium">{selectedVendor.contact}</p>
@@ -196,7 +196,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                   onClick={() => setViewMode('bills')} 
                   className={`pb-4 text-[13px] font-black uppercase tracking-widest border-b-4 transition-all ${viewMode === 'bills' ? 'border-[#2b5797] text-[#2b5797]' : 'border-transparent text-slate-400'}`}
                 >
-                  Bills Center
+                  Purchases
                 </button>
                 <button 
                   onClick={() => setViewMode('ledger')} 
@@ -211,7 +211,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="text-slate-400 border-b border-[#e1e8ef] uppercase font-black text-[10px]">
-                        <th className="pb-4">Bill Date</th>
+                        <th className="pb-4">Purchase Date</th>
                         <th className="pb-4">Doc #</th>
                         <th className="pb-4 text-right">Total Amount</th>
                         <th className="pb-4 text-right">Settled</th>
@@ -241,7 +241,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                         </tr>
                       ))}
                       {vendorBills.length === 0 && (
-                        <tr><td colSpan={7} className="py-20 text-center text-slate-300 italic">No bills found.</td></tr>
+                        <tr><td colSpan={7} className="py-20 text-center text-slate-300 italic">No purchases found.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -278,7 +278,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-300 bg-[#f8f9fa]">
              <i className="fas fa-truck text-7xl mb-6 opacity-30"></i>
-             <p className="text-lg font-light italic">Select a vendor to view details</p>
+             <p className="text-lg font-light italic">Select a supplier to view details</p>
           </div>
         )}
       </div>

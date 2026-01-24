@@ -157,7 +157,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-[#7d2b3f] uppercase mb-1">Origin Vendor</label>
+                  <label className="block text-[10px] font-black text-[#7d2b3f] uppercase mb-1">Origin Supplier</label>
                   <select 
                     value={vendorId}
                     onChange={e => setVendorId(e.target.value)}
@@ -318,7 +318,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                             onClick={() => onInitiateBill(items)}
                             className="bg-[#7d2b3f] text-white px-4 py-2 rounded text-[10px] font-black hover:bg-[#5a1f2d] transition-all shadow-md uppercase tracking-wide"
                           >
-                            <i className="fas fa-file-invoice mr-2"></i> Bill Lot
+                            <i className="fas fa-file-invoice mr-2"></i> Create Purchase
                           </button>
                        ) : (
                           <span className="text-[10px] text-green-600 font-bold">

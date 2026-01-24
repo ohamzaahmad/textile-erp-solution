@@ -155,7 +155,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
                   <td className="p-2">{item.date}</td>
                   <td className="p-2">
                     <span className={`font-bold ${item.customerId ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.customerId ? 'SALES' : 'BILL'}
+                      {item.customerId ? 'SALES' : 'PURCHASE'}
                     </span>
                   </td>
                   <td className="p-2">{item.id}</td>

@@ -228,7 +228,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
            {/* Entity & Details */}
            <div className="grid grid-cols-2 gap-16 mb-16">
               <div>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{type === 'Invoice' ? 'BILL TO' : 'VENDOR SOURCE'}</p>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{type === 'Invoice' ? 'SOLD TO' : 'SUPPLIER SOURCE'}</p>
                  <div className="space-y-1">
                     <p className="text-xl font-black text-slate-800 uppercase">{entity?.name || 'Unknown Party'}</p>
                     <p className="text-sm text-slate-500 font-medium">Contact: {entity?.contact || 'N/A'}</p>
@@ -334,7 +334,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-5 text-white font-black text-sm flex justify-between items-center tracking-widest uppercase">
-              <span>{type === 'Bill' ? 'Bill Payment' : 'Receive Funds'}</span>
+              <span>{type === 'Bill' ? 'Purchase Payment' : 'Receive Funds'}</span>
               <button onClick={() => setSettlingItem(null)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
             </div>
             <div className="p-8 space-y-6">
@@ -422,7 +422,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
             <div className="p-12 border-b-8 border-slate-50">
               <div className="flex justify-between items-start mb-16">
                 <div>
-                  <h1 className="text-5xl font-black text-slate-200 uppercase tracking-tighter mb-1">{type}</h1>
+                  <h1 className="text-5xl font-black text-slate-200 uppercase tracking-tighter mb-1">{type === 'Bill' ? 'PURCHASE' : 'SALE'}</h1>
                   <p className="text-[12px] font-black text-[#7d2b3f] tracking-widest uppercase">HA FABRICS ERP SYSTEMS</p>
                   {type === 'Bill' && lineItems.length > 0 && (
                     <p className="text-[14px] font-black text-slate-600 mt-2">LOT #{lineItems[0].lotNumber}</p>
@@ -436,7 +436,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">{type === 'Invoice' ? 'CUSTOMER' : 'VENDOR SOURCE'}</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">{type === 'Invoice' ? 'CUSTOMER' : 'SUPPLIER SOURCE'}</label>
                     <select value={selectedEntityId} onChange={e => setSelectedEntityId(e.target.value)}
                       disabled={type === 'Bill' && lineItems.length > 0}
                       className={`w-full border-b-4 border-slate-100 py-3 text-xl font-black text-slate-800 outline-none bg-transparent hover:border-[#7d2b3f] transition-all ${type === 'Bill' && lineItems.length > 0 ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -488,9 +488,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               <div className="p-0">
                 <div className="bg-[#7d2b3f]/10 p-6 border-b border-[#7d2b3f]/20">
                   <p className="text-[11px] font-black text-[#7d2b3f] uppercase tracking-widest mb-2">
-                    <i className="fas fa-info-circle mr-2"></i> Bill for Complete Lot - Items Cannot Be Modified
+                    <i className="fas fa-info-circle mr-2"></i> Purchase for Complete Lot - Items Cannot Be Modified
                   </p>
-                  <p className="text-[10px] text-slate-600">All fabrics in this lot will be billed together. Adjust payment method and notes below.</p>
+                  <p className="text-[10px] text-slate-600">All fabrics in this lot will be purchased together. Adjust payment method and notes below.</p>
                 </div>
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#7d2b3f] text-white">
@@ -604,7 +604,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               <tr>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Doc #</th>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Date</th>
-                <th className="p-5 font-black text-slate-500 uppercase tracking-widest">{type === 'Invoice' ? 'Customer' : 'Vendor'}</th>
+                <th className="p-5 font-black text-slate-500 uppercase tracking-widest">{type === 'Invoice' ? 'Customer' : 'Supplier'}</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Settlement Log</th>
                 <th className="p-5 text-right font-black text-slate-500 uppercase tracking-widest">Total Amount</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Status</th>

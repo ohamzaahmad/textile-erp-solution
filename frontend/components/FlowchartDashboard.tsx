@@ -45,12 +45,12 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         
         {/* Vendors Section */}
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
-          <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Vendor Workflow</div>
+          <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Supplier Workflow</div>
           <div className="flex items-center justify-around">
             {/* Purchase Orders Removed as requested */}
             <FlowIcon icon="fa-dolly" label="Receive Inventory" color="green" onClick={() => onNavigate('inventory')} />
             <Arrow />
-            <FlowIcon icon="fa-file-invoice" label="Enter Bills" color="maroon" onClick={() => onNavigate('bills')} />
+            <FlowIcon icon="fa-file-invoice" label="Enter Purchases" color="maroon" onClick={() => onNavigate('bills')} />
             <Arrow />
             <FlowIcon icon="fa-credit-card" label="Pay Bills" color="maroon" onClick={() => onNavigate('vendors')} />
           </div>
@@ -61,7 +61,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
           <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Customer Workflow</div>
           <div className="flex flex-col space-y-8">
             <div className="flex items-center justify-around px-12">
-               <FlowIcon icon="fa-file-invoice-dollar" label="Create Invoices" color="maroon" onClick={() => onNavigate('invoices')} />
+               <FlowIcon icon="fa-file-invoice-dollar" label="Create Sales" color="maroon" onClick={() => onNavigate('invoices')} />
                <Arrow className="mx-8" />
                <FlowIcon icon="fa-hand-holding-dollar" label="Receive Payments" color="green" onClick={() => onNavigate('customers')} />
                <Arrow className="mx-8" />
@@ -121,7 +121,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
             <i className="fas fa-lightbulb mr-2 text-red-500"></i>
             Workflow Advice
           </h4>
-          <p className="text-red-700 leading-relaxed font-medium">Use the <strong className="text-red-900">Create Invoice</strong> screen to sell inventory. The system will track partial payments and update customer balances in real-time.</p>
+          <p className="text-red-700 leading-relaxed font-medium">Use the <strong className="text-red-900">Create Sale</strong> screen to sell inventory. The system will track partial payments and update customer balances in real-time.</p>
         </div>
       </div>
     </div>

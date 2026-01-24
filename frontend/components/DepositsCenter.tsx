@@ -13,13 +13,13 @@ const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
 
   invoices.forEach(inv => {
     inv.paymentHistory.forEach(pay => {
-      allPayments.push({ ...pay, source: `Inv #${inv.id}`, partyName: 'Customer Payment', type: 'Incoming' });
+      allPayments.push({ ...pay, source: `Sale #${inv.id}`, partyName: 'Customer Payment', type: 'Incoming' });
     });
   });
 
   bills.forEach(bill => {
     bill.paymentHistory.forEach(pay => {
-      allPayments.push({ ...pay, source: `Bill #${bill.id}`, partyName: 'Vendor Settlement', type: 'Outgoing' });
+      allPayments.push({ ...pay, source: `Purchase #${bill.id}`, partyName: 'Supplier Settlement', type: 'Outgoing' });
     });
   });
 

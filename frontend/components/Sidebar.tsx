@@ -12,11 +12,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogout }) => {
   const allMenuItems = [
     { id: 'home', label: 'Home', icon: 'fa-home', roles: ['manager'] },
-    { id: 'vendors', label: 'Vendor Center', icon: 'fa-truck', roles: ['manager'] },
+    { id: 'vendors', label: 'Supplier Center', icon: 'fa-truck', roles: ['manager'] },
     { id: 'customers', label: 'Customer Center', icon: 'fa-users', roles: ['manager', 'cashier'] },
     { id: 'inventory', label: 'Inventory', icon: 'fa-boxes-stacked', roles: ['manager'] },
-    { id: 'invoices', label: 'Invoices', icon: 'fa-file-invoice-dollar', roles: ['manager', 'cashier'] },
-    { id: 'bills', label: 'Bills', icon: 'fa-receipt', roles: ['manager'] },
+    { id: 'invoices', label: 'Sales', icon: 'fa-file-invoice-dollar', roles: ['manager', 'cashier'] },
+    { id: 'bills', label: 'Purchases', icon: 'fa-receipt', roles: ['manager'] },
+    { id: 'expenses', label: 'Expenses', icon: 'fa-money-bill-wave', roles: ['manager'] },
     { id: 'reports', label: 'Reports', icon: 'fa-chart-line', roles: ['manager'] },
   ];
 

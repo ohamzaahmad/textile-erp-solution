@@ -21,22 +21,22 @@ const GuideCenter: React.FC = () => {
             <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-lg hover:scale-105">
               <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full font-black">1</div>
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Inventory Inflow</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">Vendors deliver fabrics in <strong>Lots</strong>. Users "Receive Stock" to log physical meters. This creates a <strong>Pending Receipt</strong> that doesn't yet affect financial accounts.</p>
+              <p className="text-xs text-slate-500 leading-relaxed">Suppliers deliver fabrics in <strong>Lots</strong>. Users "Receive Stock" to log physical meters. This creates a <strong>Pending Receipt</strong> that doesn't yet affect financial accounts.</p>
             </div>
             <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-lg hover:scale-105">
               <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full font-black">2</div>
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Financial Recognition</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">Creating a <strong>Bill</strong> against a received Lot converts physical stock into a financial liability. Vendor balances are updated (Decreased/Negative Balance represents money we owe).</p>
+              <p className="text-xs text-slate-500 leading-relaxed">Creating a <strong>Purchase</strong> against a received Lot converts physical stock into a financial liability. Supplier balances are updated (Decreased/Negative Balance represents money we owe).</p>
             </div>
             <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-lg hover:scale-105">
               <div className="w-10 h-10 bg-red-600 text-white flex items-center justify-center rounded-full font-black">3</div>
               <h3 className="font-black text-slate-800 uppercase text-xs tracking-widest">Sales & Outflow</h3>
-              <p className="text-xs text-slate-500 leading-relaxed"><strong>Invoices</strong> are created for Customers. This reduces stock meters in real-time and increases Customer <strong>Receivables</strong>. Lot numbers are hidden on client invoices for privacy.</p>
+              <p className="text-xs text-slate-500 leading-relaxed"><strong>Sales</strong> are created for Customers. This reduces stock meters in real-time and increases Customer <strong>Receivables</strong>. Lot numbers are hidden on client invoices for privacy.</p>
             </div>
           </div>
           <div className="bg-red-50 border border-red-100 p-6 rounded-2xl transition-all duration-300 hover:shadow-md">
             <h4 className="text-[10px] font-black text-red-800 uppercase tracking-widest mb-2">Settlement Logic</h4>
-            <p className="text-xs text-red-700 leading-relaxed">Every Bill and Invoice tracks its own <strong>Payment History</strong>. A document is only marked "Paid" when the total sum of payments matches the document total. Partial payments keep the document in "Partially Paid" status.</p>
+            <p className="text-xs text-red-700 leading-relaxed">Every Purchase and Sale tracks its own <strong>Payment History</strong>. A document is only marked "Paid" when the total sum of payments matches the document total. Partial payments keep the document in "Partially Paid" status.</p>
           </div>
         </div>
       </section>
@@ -84,10 +84,10 @@ const GuideCenter: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-800">
                 <tr><td className="py-3 font-mono text-blue-300">/api/v1/auth/login/</td><td className="py-3">POST</td><td className="py-3 opacity-60">JWT Token Generation & Role Return</td></tr>
-                <tr><td className="py-3 font-mono text-blue-300">/api/v1/vendors/</td><td className="py-3">GET/POST</td><td className="py-3 opacity-60">Vendor list and creation</td></tr>
+                <tr><td className="py-3 font-mono text-blue-300">/api/v1/vendors/</td><td className="py-3">GET/POST</td><td className="py-3 opacity-60">Supplier list and creation</td></tr>
                 <tr><td className="py-3 font-mono text-blue-300">/api/v1/inventory/lots/</td><td className="py-3">POST</td><td className="py-3 opacity-60">Bulk create Inventory items (Receive Lot)</td></tr>
-                <tr><td className="py-3 font-mono text-blue-300">/api/v1/bills/</td><td className="py-3">POST</td><td className="py-3 opacity-60">Create Bill, Update Inventory.is_billed=True</td></tr>
-                <tr><td className="py-3 font-mono text-blue-300">/api/v1/invoices/</td><td className="py-3">POST</td><td className="py-3 opacity-60">Create Invoice, Deduct Inventory meters</td></tr>
+                <tr><td className="py-3 font-mono text-blue-300">/api/v1/bills/</td><td className="py-3">POST</td><td className="py-3 opacity-60">Create Purchase, Update Inventory.is_billed=True</td></tr>
+                <tr><td className="py-3 font-mono text-blue-300">/api/v1/invoices/</td><td className="py-3">POST</td><td className="py-3 opacity-60">Create Sale, Deduct Inventory meters</td></tr>
                 <tr><td className="py-3 font-mono text-blue-300">/api/v1/payments/settle/</td><td className="py-3">POST</td><td className="py-3 opacity-60">Generic handler for partial settlements</td></tr>
                 <tr><td className="py-3 font-mono text-blue-300">/api/v1/reports/summary/</td><td className="py-3">GET</td><td className="py-3 opacity-60">Dashboard totals (Aggregated)</td></tr>
               </tbody>
@@ -101,7 +101,7 @@ const GuideCenter: React.FC = () => {
          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <h4 className="font-black text-slate-800 uppercase text-xs tracking-widest">Django Transaction Safety</h4>
             <p className="text-xs text-slate-500 leading-relaxed">
-              When creating an invoice, use <code>transaction.atomic()</code>. 
+              When creating a sale, use <code>transaction.atomic()</code>. 
               You must simultaneously create the Invoice object, create the Payment record (if any), 
               deduct inventory meters, and update the Customer's ledger balance. 
               If any step fails, the database must roll back to prevent stock inconsistencies.

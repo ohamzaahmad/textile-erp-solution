@@ -11,6 +11,7 @@ import InvoiceBillCenter from './components/InvoiceBillCenter';
 import ReportsCenter from './components/ReportsCenter';
 import DepositsCenter from './components/DepositsCenter';
 import ItemMasterCenter from './components/ItemMasterCenter';
+import ExpensesCenter from './components/ExpensesCenter';
 import AuthPage from './components/AuthPage';
 import Toast from './components/Toast';
 
@@ -516,6 +517,8 @@ const App: React.FC = () => {
         return <DepositsCenter invoices={invoices} bills={bills} />;
       case 'itemMaster':
         return <ItemMasterCenter inventory={inventory} />;
+      case 'expenses':
+        return <ExpensesCenter />;
       case 'reports':
         return <ReportsCenter invoices={invoices} bills={bills} />;
       default:

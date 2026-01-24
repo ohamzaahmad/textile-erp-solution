@@ -175,7 +175,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                   onClick={() => setViewMode('invoices')} 
                   className={`pb-4 text-[13px] font-black uppercase tracking-widest border-b-4 transition-all ${viewMode === 'invoices' ? 'border-[#2b5797] text-[#2b5797]' : 'border-transparent text-slate-400'}`}
                 >
-                  Invoices Center
+                  Sales
                 </button>
                 <button 
                   onClick={() => setViewMode('ledger')} 
@@ -192,7 +192,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                       <tr className="text-slate-400 border-b border-[#e1e8ef] uppercase font-black text-[10px]">
                         <th className="pb-4">Date</th>
                         <th className="pb-4">Doc #</th>
-                        <th className="pb-4 text-right">Invoice Total</th>
+                        <th className="pb-4 text-right">Sale Total</th>
                         <th className="pb-4 text-right">Collected</th>
                         <th className="pb-4 text-right">Outstanding</th>
                         <th className="pb-4 text-center">Status</th>
