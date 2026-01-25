@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Page, Vendor, Customer, InventoryItem, Invoice, Bill, PaymentRecord, Transaction, User, Expense } from './types';
-import { vendorsAPI, customersAPI, inventoryAPI, invoicesAPI, billsAPI, authAPI, TokenManager } from './api';
+import { vendorsAPI, customersAPI, inventoryAPI, invoicesAPI, billsAPI, authAPI, TokenManager, emitToast } from './api';
 import Sidebar from './components/Sidebar';
 import FlowchartDashboard from './components/FlowchartDashboard';
 import VendorCenter from './components/VendorCenter';
@@ -17,7 +17,14 @@ import Toast from './components/Toast';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    try {
+      const hash = window?.location?.hash?.replace(/^#/, '') || '';
+      return (hash as Page) || 'home';
+    } catch (e) {
+      return 'home';
+    }
+  });
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -27,6 +34,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   const [pendingBillLot, setPendingBillLot] = useState<InventoryItem[] | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   // Load data from backend when user logs in
   useEffect(() => {
@@ -198,12 +207,63 @@ const App: React.FC = () => {
 
   // Redirection Logic for Cashier
   useEffect(() => {
+    // Only redirect cashiers to invoices when they have no explicit page selected
     if (currentUser?.role === 'cashier') {
-      if (currentPage !== 'invoices' && currentPage !== 'customers') {
+      if (currentPage === 'home' || !currentPage) {
         setCurrentPage('invoices');
       }
     }
   }, [currentUser, currentPage]);
+
+  // Persist current page in the URL hash so refresh preserves the route
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        window.location.hash = `#${currentPage}`;
+      }
+    } catch (e) {}
+  }, [currentPage]);
+
+  // Allow lightweight data refresh without reloading the entire app.
+  // Dispatch `window.dispatchEvent(new Event('app-refresh-data'))` to trigger.
+  useEffect(() => {
+    const handler = async (e?: Event) => {
+      // Only reload data if user is signed in
+      if (!currentUser) return;
+      try {
+        emitToast('Refreshing data...', 'info');
+        await loadAllData();
+        emitToast('Data refreshed', 'success');
+      } catch (err) {
+        console.error('Soft refresh failed:', err);
+        emitToast('Failed to refresh data', 'error');
+      }
+    };
+    window.addEventListener('app-refresh-data', handler as EventListener);
+    return () => window.removeEventListener('app-refresh-data', handler as EventListener);
+  // intentionally depends on currentUser and loadAllData
+  }, [currentUser]);
+
+  // Intercept F5 and Ctrl/Cmd+R to perform a soft refresh (reload data only)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Ignore when focus is on editable elements
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isEditable = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      if (isEditable) return;
+
+      const isCtrlR = (e.key === 'r' || e.key === 'R') && (e.ctrlKey || e.metaKey);
+      const isF5 = e.key === 'F5';
+      if (isF5 || isCtrlR) {
+        e.preventDefault();
+        // dispatch the same event used by the Refresh button
+        window.dispatchEvent(new Event('app-refresh-data'));
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown as EventListener);
+    return () => window.removeEventListener('keydown', onKeyDown as EventListener);
+  }, [currentUser]);
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -530,9 +590,9 @@ const App: React.FC = () => {
         const receivables = invoices.reduce((acc, i) => acc + (parseFloat(String(i.total || 0)) - parseFloat(String(i.amountPaid || 0))), 0);
         return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables }} />;
       case 'vendors':
-        return <VendorCenter vendors={vendors} bills={bills} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} />;
+        return <VendorCenter vendors={vendors} bills={bills} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} selectedId={selectedVendorId} />;
         case 'customers':
-          return <CustomerCenter customers={customers} invoices={invoices} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} />;
+          return <CustomerCenter customers={customers} invoices={invoices} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} selectedId={selectedCustomerId} />;
       case 'inventory':
         return <InventoryCenter inventory={inventory} setInventory={setInventory} vendors={vendors} onReceive={handleReceiveStock} onInitiateBill={handleInitiateBill} />;
       case 'invoices':
@@ -558,7 +618,14 @@ const App: React.FC = () => {
       case 'expenses':
         return <ExpensesCenter expenses={expenses} onExpensesChange={setExpenses} />;
       case 'reports':
-        return <ReportsCenter invoices={invoices} bills={bills} expenses={expenses} />;
+        return <ReportsCenter invoices={invoices} bills={bills} expenses={expenses} vendors={vendors} customers={customers}
+          onNavigate={(page, id) => {
+            setCurrentPage(page === 'vendors' ? 'vendors' : 'customers');
+            if (page === 'vendors') setSelectedVendorId(id || null);
+            else setSelectedCustomerId(id || null);
+            try { window.location.hash = `#${page === 'vendors' ? 'vendors' : 'customers'}`; } catch {}
+          }}
+        />;
       default:
         return <FlowchartDashboard onNavigate={setCurrentPage} />;
     }
@@ -598,6 +665,14 @@ const App: React.FC = () => {
                  <i className="fas fa-sync fa-spin mr-2"></i> Loading...
                </span>
              )}
+             <button
+               onClick={() => window.dispatchEvent(new Event('app-refresh-data'))}
+               title="Refresh data"
+               className="flex items-center px-3 py-1 rounded bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200"
+             >
+               <i className="fas fa-sync-alt mr-2"></i>
+               <span className="text-[10px] font-black uppercase">Refresh</span>
+             </button>
           </div>
         </div>
         <main className="flex-1 overflow-auto p-8 relative bg-[#eef2f6] transition-all duration-300 ease-in-out">

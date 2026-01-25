@@ -425,7 +425,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{type === 'Bill' ? 'Accounts Payable' : 'Accounts Receivable'}</p>
           </div>
         </div>
-        {!isCreating && (
+        {!isCreating && type !== 'Bill' && (
           <button 
             onClick={() => setIsCreating(true)}
             className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all duration-300 ease-in-out shadow-lg active:scale-95 transform uppercase tracking-widest"

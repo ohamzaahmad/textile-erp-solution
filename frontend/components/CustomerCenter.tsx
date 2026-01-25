@@ -10,9 +10,10 @@ interface CustomerCenterProps {
   onAddCustomer: (customer: Customer) => Promise<Customer | null>;
   onUpdateCustomer?: (customer: Customer) => Promise<Customer | null>;
   currentUser?: { username: string; role: string; name: string } | null;
+  selectedId?: string | null;
 }
 
-const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, onReceivePayment, onAddCustomer, onUpdateCustomer, currentUser }) => {
+const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, onReceivePayment, onAddCustomer, onUpdateCustomer, currentUser, selectedId }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(customers[0]?.id || null);
   const [viewMode, setViewMode] = useState<'invoices' | 'ledger'>('invoices');
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
@@ -30,6 +31,13 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
   const customerInvoices = invoices.filter(inv => inv.customerId === selectedCustomerId);
+
+  // Update selection when parent provides a selectedId
+  React.useEffect(() => {
+    if (typeof selectedId !== 'undefined' && selectedId !== null) {
+      setSelectedCustomerId(String(selectedId));
+    }
+  }, [selectedId]);
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -287,24 +295,40 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                 ) : (
                   <table className="w-full text-left text-[11px] border-collapse">
                     <thead className="bg-slate-50 text-slate-400 border-b border-slate-200">
-                      <tr className="uppercase font-black text-[10px] tracking-widest">
-                        <th className="p-4">Date</th>
-                        <th className="p-4">Transaction Details</th>
-                        <th className="p-4">Reference</th>
-                        <th className="p-4 text-right">Sales (+)</th>
-                        <th className="p-4 text-right">Collection (-)</th>
-                      </tr>
+                        <tr className="uppercase font-black text-[10px] tracking-widest">
+                          <th className="p-4">Date</th>
+                          <th className="p-4">Transaction Details</th>
+                          <th className="p-4">Reference</th>
+                          <th className="p-4 text-right">Sales (+)</th>
+                          <th className="p-4 text-right">Collection (-)</th>
+                          <th className="p-4 text-right">Running Balance</th>
+                        </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {selectedCustomer.logs.map((log: Transaction) => (
-                        <tr key={log.id} className="hover:bg-slate-50">
-                          <td className="p-4 font-bold text-slate-600">{log.date ? new Date(log.date).toLocaleDateString() : ''}</td>
-                          <td className="p-4 text-slate-700">{log.description}</td>
-                          <td className="p-4 font-mono text-[10px] text-green-600">#{log.referenceId}</td>
-                          <td className="p-4 text-right text-red-600 font-bold">{log.type === 'Invoice' ? log.amount.toLocaleString() : '-'}</td>
-                          <td className="p-4 text-right text-green-600 font-bold">{log.type === 'Payment' ? log.amount.toLocaleString() : '-'}</td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        // Chronological (oldest first) to compute running balance
+                        const logs = [...selectedCustomer.logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                        let running = 0;
+                        const rows = logs.map((log: Transaction) => {
+                          // For customer ledger: Invoice increases receivable, Payment decreases receivable
+                          const credit = log.type === 'Invoice' ? Number(log.amount) : 0; // sales
+                          const debit = log.type === 'Payment' ? Number(log.amount) : 0; // collections
+                          // Here running = running + credit - debit (receivable)
+                          running += credit - debit;
+                          return { ...log, credit, debit, running };
+                        });
+
+                        return rows.reverse().map((row: any) => (
+                          <tr key={row.id} className="hover:bg-slate-50">
+                            <td className="p-4 font-bold text-slate-600">{row.date ? new Date(row.date).toLocaleDateString() : ''}</td>
+                            <td className="p-4 text-slate-700">{row.description}</td>
+                            <td className="p-4 font-mono text-[10px] text-green-600">#{row.referenceId}</td>
+                            <td className="p-4 text-right text-red-600 font-bold">{row.credit ? `Rs. ${row.credit.toLocaleString()}` : '-'}</td>
+                            <td className="p-4 text-right text-green-600 font-bold">{row.debit ? `Rs. ${row.debit.toLocaleString()}` : '-'}</td>
+                            <td className={`p-4 text-right font-black ${row.running >= 0 ? 'text-green-700' : 'text-red-700'}`}>Rs. {row.running.toLocaleString()}</td>
+                          </tr>
+                        ));
+                      })()}
                       {selectedCustomer.logs.length === 0 && (
                         <tr><td colSpan={5} className="py-20 text-center text-slate-300 italic uppercase font-black opacity-20 tracking-widest">No transaction logs available</td></tr>
                       )}

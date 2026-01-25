@@ -10,9 +10,10 @@ interface VendorCenterProps {
   onAddVendor: (vendor: Vendor) => Promise<Vendor | null>;
   onUpdateVendor?: (vendor: Vendor) => Promise<Vendor | null>;
   currentUser?: { username: string; role: string; name: string } | null;
+  selectedId?: string | null;
 }
 
-const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, onAddVendor, onUpdateVendor, currentUser }) => {
+const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, onAddVendor, onUpdateVendor, currentUser, selectedId }) => {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(vendors[0]?.id || null);
   const [viewMode, setViewMode] = useState<'bills' | 'ledger'>('bills');
   const [payingBill, setPayingBill] = useState<Bill | null>(null);
@@ -31,6 +32,14 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
 
   const selectedVendor = vendors.find(v => v.id === selectedVendorId);
   const vendorBills = bills.filter(b => b.vendorId === selectedVendorId);
+
+  // Update selection when parent provides a selectedId
+  React.useEffect(() => {
+    if (typeof selectedId !== 'undefined' && selectedId !== null) {
+      // Ensure it's a string
+      setSelectedVendorId(String(selectedId));
+    }
+  }, [selectedId]);
 
   const filteredVendors = vendors.filter(v => 
     v.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -333,18 +342,33 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                         <th className="p-4">Reference</th>
                         <th className="p-4 text-right">Dr (Bills)</th>
                         <th className="p-4 text-right">Cr (Payments)</th>
+                           <th className="p-4 text-right">Running Balance</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {selectedVendor.logs.map((log: Transaction) => (
-                        <tr key={log.id} className="hover:bg-slate-50">
-                          <td className="p-4 font-bold text-slate-600">{log.date ? new Date(log.date).toLocaleDateString() : ''}</td>
-                          <td className="p-4 text-slate-700">{log.description}</td>
-                          <td className="p-4 font-mono text-[10px] text-blue-600">#{log.referenceId}</td>
-                          <td className="p-4 text-right text-red-600 font-bold">{log.type === 'Bill' ? log.amount.toLocaleString() : '-'}</td>
-                          <td className="p-4 text-right text-green-600 font-bold">{log.type === 'Payment' ? log.amount.toLocaleString() : '-'}</td>
-                        </tr>
-                      ))}
+                              {(() => {
+                                // Ensure chronological order (oldest first) to compute running balance
+                                const logs = [...selectedVendor.logs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                                let running = 0;
+                                const rows = logs.map((log: Transaction) => {
+                                  // For vendor ledger: Bill increases payable (debit), Payment decreases payable (credit)
+                                  const debit = log.type === 'Bill' ? Number(log.amount) : 0;
+                                  const credit = log.type === 'Payment' ? Number(log.amount) : 0;
+                                  running += debit - credit;
+                                  return { ...log, debit, credit, running };
+                                });
+
+                                return rows.reverse().map((row: any) => (
+                                  <tr key={row.id} className="hover:bg-slate-50">
+                                    <td className="p-4 font-bold text-slate-600">{row.date ? new Date(row.date).toLocaleDateString() : ''}</td>
+                                    <td className="p-4 text-slate-700">{row.description}</td>
+                                    <td className="p-4 font-mono text-[10px] text-blue-600">#{row.referenceId}</td>
+                                    <td className="p-4 text-right text-red-600 font-bold">{row.debit ? `Rs. ${row.debit.toLocaleString()}` : '-'}</td>
+                                    <td className="p-4 text-right text-green-600 font-bold">{row.credit ? `Rs. ${row.credit.toLocaleString()}` : '-'}</td>
+                                    <td className={`p-4 text-right font-black ${row.running >= 0 ? 'text-green-700' : 'text-red-700'}`}>Rs. {row.running.toLocaleString()}</td>
+                                  </tr>
+                                ));
+                              })()}
                       {selectedVendor.logs.length === 0 && (
                         <tr><td colSpan={5} className="py-20 text-center text-slate-300 italic uppercase font-black opacity-20 tracking-widest">No transaction logs available</td></tr>
                       )}
