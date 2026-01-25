@@ -94,24 +94,39 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
                  <td colSpan={6} className="p-10 text-center text-slate-400 italic">No daily logs available</td>
                </tr>
             ) : (
-              [...invoices.map((inv: any) => ({ ...inv, type: 'SALES', amount: inv.total, isIncome: true })),
-               ...bills.map((bill: any) => ({ ...bill, type: 'PURCHASE', amount: bill.total, isIncome: false })),
-               ...expenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: exp.amount, isIncome: false }))]
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((item: any, idx) => (
-                <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="p-2">{item.date}</td>
-                  <td className="p-2">
-                    <span className={`font-bold ${item.isIncome ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.type}
-                    </span>
-                  </td>
-                  <td className="p-2">{item.type === 'EXPENSE' ? item.description : item.id}</td>
-                  <td className="p-2 text-right text-green-600">{item.isIncome ? `+ ${item.amount.toLocaleString()}` : '-'}</td>
-                  <td className="p-2 text-right text-red-600">{!item.isIncome ? `- ${item.amount.toLocaleString()}` : '-'}</td>
-                  <td className="p-2 text-right font-bold">---</td>
-                </tr>
-              ))
+              (() => {
+                // Sort chronologically (oldest first) to calculate running balance
+                const sortedItems = [...invoices.map((inv: any) => ({ ...inv, type: 'SALES', amount: inv.total, isIncome: true })),
+                  ...bills.map((bill: any) => ({ ...bill, type: 'PURCHASE', amount: bill.total, isIncome: false })),
+                  ...expenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: Number(exp.amount), isIncome: false }))]
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                
+                let runningBalance = 0;
+                
+                // Calculate running balance and attach it to each item
+                const itemsWithBalance = sortedItems.map((item: any) => {
+                  runningBalance += item.isIncome ? item.amount : -item.amount;
+                  return { ...item, runningBalance };
+                });
+                
+                // Reverse to show newest first (latest on top)
+                return itemsWithBalance.reverse().map((item: any, idx) => (
+                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="p-2">{item.date}</td>
+                    <td className="p-2">
+                      <span className={`font-bold ${item.isIncome ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.type}
+                      </span>
+                    </td>
+                    <td className="p-2">{item.type === 'EXPENSE' ? item.description : item.id}</td>
+                    <td className="p-2 text-right text-green-600">{item.isIncome ? `+ ${item.amount.toLocaleString()}` : '-'}</td>
+                    <td className="p-2 text-right text-red-600">{!item.isIncome ? `- ${item.amount.toLocaleString()}` : '-'}</td>
+                    <td className={`p-2 text-right font-bold ${item.runningBalance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      Rs. {item.runningBalance.toLocaleString()}
+                    </td>
+                  </tr>
+                ));
+              })()
             )}
           </tbody>
         </table>

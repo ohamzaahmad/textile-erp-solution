@@ -88,6 +88,12 @@ class ApiClient {
         throw new Error(message);
       }
 
+      // Handle empty responses (e.g., DELETE returns 204 No Content)
+      const contentType = response.headers.get('content-type');
+      if (response.status === 204 || !contentType || contentType.indexOf('application/json') === -1) {
+        return {} as T;
+      }
+
       const data = await response.json();
       
       // Handle paginated responses from DRF
