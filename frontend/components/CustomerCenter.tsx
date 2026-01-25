@@ -8,21 +8,24 @@ interface CustomerCenterProps {
   invoices: Invoice[];
   onReceivePayment: (invoiceId: string, payment: PaymentRecord) => void;
   onAddCustomer: (customer: Customer) => Promise<Customer | null>;
+  onUpdateCustomer?: (customer: Customer) => Promise<Customer | null>;
+  currentUser?: { username: string; role: string; name: string } | null;
 }
 
-const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, onReceivePayment, onAddCustomer }) => {
+const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, onReceivePayment, onAddCustomer, onUpdateCustomer, currentUser }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(customers[0]?.id || null);
   const [viewMode, setViewMode] = useState<'invoices' | 'ledger'>('invoices');
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [editCustomerData, setEditCustomerData] = useState<any>(null);
   
   const [newCustomerData, setNewCustomerData] = useState({ 
     name: '', 
     contact: '', 
-    address: '',
-    shortDescription: ''
+    address: ''
   });
 
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
@@ -70,23 +73,46 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       name: newCustomerData.name,
       contact: newCustomerData.contact,
       address: newCustomerData.address,
-      shortDescription: newCustomerData.shortDescription,
       balance: 0,
       logs: []
     };
     const result = await onAddCustomer(customer);
     setIsCreatingCustomer(false);
-    setNewCustomerData({ name: '', contact: '', address: '', shortDescription: '' });
+    setNewCustomerData({ name: '', contact: '', address: '' });
     if (result) {
       setSelectedCustomerId(result.id); // Use the ID from backend response
     }
+  };
+
+  const openEditCustomer = () => {
+    if (!selectedCustomer) return;
+    setEditCustomerData({ ...selectedCustomer });
+    setIsEditingCustomer(true);
+  };
+
+  const handleSaveEditCustomer = async () => {
+    if (!editCustomerData || !editCustomerData.name) {
+      alert('Customer name required');
+      return;
+    }
+    if (!onUpdateCustomer) return;
+    const updated = await onUpdateCustomer({
+      id: editCustomerData.id,
+      name: editCustomerData.name,
+      contact: editCustomerData.contact,
+      address: editCustomerData.address,
+      balance: selectedCustomer?.balance || 0,
+      logs: selectedCustomer?.logs || []
+    });
+    setIsEditingCustomer(false);
+    if (updated) setSelectedCustomerId(String(updated.id));
   };
 
   return (
     <div className="flex h-full bg-[#f0f3f6] rounded border border-[#a3b6cc] overflow-hidden shadow-2xl">
       {/* Modals */}
       {isCreatingCustomer && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
               <span>Add New Customer</span>
@@ -96,7 +122,6 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
               <input type="text" value={newCustomerData.name} onChange={e => setNewCustomerData({...newCustomerData, name: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Customer Name" />
               <input type="text" value={newCustomerData.contact} onChange={e => setNewCustomerData({...newCustomerData, contact: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Contact Phone" />
               <input type="text" value={newCustomerData.address} onChange={e => setNewCustomerData({...newCustomerData, address: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Address (optional)" />
-              <input type="text" value={newCustomerData.shortDescription} onChange={e => setNewCustomerData({...newCustomerData, shortDescription: e.target.value})} className="w-full border p-2 text-sm outline-none" placeholder="Short description (optional)" />
               <div className="pt-4 flex justify-end space-x-2 border-t">
                 <button onClick={() => setIsCreatingCustomer(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
                 <button onClick={handleCreateCustomer} className="px-6 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save</button>
@@ -106,8 +131,29 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
         </div>
       )}
 
+      {/* Edit Customer Modal */}
+      {isEditingCustomer && editCustomerData && (
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
+              <span>Edit Customer</span>
+              <button onClick={() => setIsEditingCustomer(false)}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <input type="text" value={editCustomerData.name} onChange={e => setEditCustomerData({...editCustomerData, name: e.target.value})} className="w-full border p-2 text-sm outline-none" />
+              <input type="text" value={editCustomerData.contact} onChange={e => setEditCustomerData({...editCustomerData, contact: e.target.value})} className="w-full border p-2 text-sm outline-none" />
+              <input type="text" value={editCustomerData.address} onChange={e => setEditCustomerData({...editCustomerData, address: e.target.value})} className="w-full border p-2 text-sm outline-none" />
+              <div className="pt-4 flex justify-end space-x-2 border-t">
+                <button onClick={() => setIsEditingCustomer(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
+                <button onClick={handleSaveEditCustomer} className="px-6 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {payingInvoice && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-4 text-white font-bold text-sm flex justify-between items-center">
               <span>Receive Payment for #{payingInvoice.id}</span>
@@ -122,7 +168,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
       )}
 
       {/* Sidebar */}
-      <div className="w-[280px] bg-white border-r border-[#a3b6cc] flex flex-col shrink-0">
+      <div className="w-70 bg-white border-r border-[#a3b6cc] flex flex-col shrink-0">
         <div className="p-4 bg-white shadow-sm">
           <div className="flex items-center justify-between mb-3 gap-2">
             <span className="text-[11px] font-bold text-slate-700 uppercase whitespace-nowrap">Active Customers</span>
@@ -156,9 +202,18 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
             <div className="p-10 border-b border-[#e1e8ef] bg-white flex justify-between items-start">
               <div className="space-y-3">
                 <h2 className="text-4xl font-light text-slate-400 tracking-tight">Customer Information</h2>
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
                    <p className="text-xl font-bold text-slate-800 uppercase tracking-tighter">{selectedCustomer.name}</p>
-                   <p className="text-sm text-slate-500 font-medium">{selectedCustomer.contact}</p>
+                   <div className="space-y-1">
+                     <p className="text-sm text-slate-600 font-medium flex items-center">
+                       <i className="fas fa-phone mr-2 text-slate-400"></i> {selectedCustomer.contact || 'No contact provided'}
+                     </p>
+                     {selectedCustomer.address && (
+                       <p className="text-sm text-slate-600 font-medium flex items-center">
+                         <i className="fas fa-map-marker-alt mr-2 text-slate-400"></i> {selectedCustomer.address}
+                       </p>
+                     )}
+                   </div>
                 </div>
               </div>
               <div className="text-right">
@@ -167,6 +222,11 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                   PKR {selectedCustomer.balance.toLocaleString()}
                 </p>
               </div>
+            </div>
+            <div className="p-4 border-b border-[#e1e8ef] bg-white text-right">
+              {currentUser?.role === 'manager' && (
+                <button onClick={openEditCustomer} className="px-4 py-1 text-xs font-bold bg-[#7d2b3f] text-white rounded">Edit Customer</button>
+              )}
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -257,7 +317,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-300 bg-[#f8f9fa]">
              <i className="fas fa-users text-7xl mb-6 opacity-30"></i>
-             <p className="text-xl font-light italic text-slate-500 opacity-60 uppercase tracking-widest font-black">Select a customer</p>
+             <p className="text-xl font-black italic text-slate-500 opacity-60 uppercase tracking-widest">Select a customer</p>
           </div>
         )}
       </div>

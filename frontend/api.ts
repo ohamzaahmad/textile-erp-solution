@@ -259,3 +259,12 @@ export const paymentsAPI = {
   getAll: () => api.get<any[]>('/payments/'),
   getById: (id: string) => api.get<any>(`/payments/${id}/`),
 };
+
+export const expensesAPI = {
+  getAll: () => api.get<any[]>('/expenses/'),
+  getById: (id: string) => api.get<any>(`/expenses/${id}/`),
+  create: (data: any) => api.post<any>('/expenses/', data),
+  update: (id: string, data: any) => api.put<any>(`/expenses/${id}/`, data),
+  delete: (id: string) => api.delete(`/expenses/${id}/`),
+  getSummary: () => api.get<any>('/expenses/summary/'),
+};

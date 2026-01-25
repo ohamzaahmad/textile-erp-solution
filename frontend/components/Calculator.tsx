@@ -139,7 +139,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
   }, [handleDigit, handleOperator, calculate, clear, backspace]);
 
   return (
-    <div className="absolute top-10 right-10 w-80 bg-slate-900 rounded-2xl shadow-2xl border border-slate-700 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-4 flex flex-col ring-1 ring-white/10">
+    <div className="absolute top-10 right-10 w-80 bg-slate-900 rounded-2xl shadow-2xl border border-slate-700 z-100 overflow-hidden animate-in fade-in slide-in-from-top-4 flex flex-col ring-1 ring-white/10">
       {/* Title Bar */}
       <div className="bg-[#5a1f2d] p-3 flex justify-between items-center text-white text-[10px] font-black uppercase tracking-widest border-b border-[#3d1420]">
         <div className="flex items-center space-x-2">

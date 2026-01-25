@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Page, Vendor, Customer, InventoryItem, Invoice, Bill, PaymentRecord, Transaction, User } from './types';
+import { Page, Vendor, Customer, InventoryItem, Invoice, Bill, PaymentRecord, Transaction, User, Expense } from './types';
 import { vendorsAPI, customersAPI, inventoryAPI, invoicesAPI, billsAPI, authAPI, TokenManager } from './api';
 import Sidebar from './components/Sidebar';
 import FlowchartDashboard from './components/FlowchartDashboard';
@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   const [pendingBillLot, setPendingBillLot] = useState<InventoryItem[] | null>(null);
@@ -278,6 +279,25 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateVendor = async (vendor: Vendor) => {
+    try {
+      const backendData = {
+        name: vendor.name,
+        contact: vendor.contact,
+        address: vendor.address,
+        bank_details: vendor.bankDetails,
+      };
+      const updated = await vendorsAPI.update(String(vendor.id), backendData);
+      const mapped = mapVendor(updated);
+      setVendors(prev => prev.map(v => v.id === mapped.id ? mapped : v));
+      return mapped;
+    } catch (error) {
+      console.error('Error updating vendor:', error);
+      alert('Failed to update vendor.');
+      return null;
+    }
+  };
+
   const handleAddCustomer = async (customer: Customer) => {
     try {
       const backendData = {
@@ -292,6 +312,24 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error adding customer:', error);
       alert('Failed to add customer. Please try again.');
+    }
+  };
+
+  const handleUpdateCustomer = async (customer: Customer) => {
+    try {
+      const backendData = {
+        name: customer.name,
+        contact: customer.contact,
+        address: customer.address,
+      };
+      const updated = await customersAPI.update(String(customer.id), backendData);
+      const mapped = mapCustomer(updated);
+      setCustomers(prev => prev.map(c => c.id === mapped.id ? mapped : c));
+      return mapped;
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      alert('Failed to update customer.');
+      return null;
     }
   };
 
@@ -492,9 +530,9 @@ const App: React.FC = () => {
         const receivables = invoices.reduce((acc, i) => acc + (parseFloat(String(i.total || 0)) - parseFloat(String(i.amountPaid || 0))), 0);
         return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables }} />;
       case 'vendors':
-        return <VendorCenter vendors={vendors} bills={bills} onPayBill={handlePayBill} onAddVendor={handleAddVendor} />;
-      case 'customers':
-        return <CustomerCenter customers={customers} invoices={invoices} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} />;
+        return <VendorCenter vendors={vendors} bills={bills} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} />;
+        case 'customers':
+          return <CustomerCenter customers={customers} invoices={invoices} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} />;
       case 'inventory':
         return <InventoryCenter inventory={inventory} setInventory={setInventory} vendors={vendors} onReceive={handleReceiveStock} onInitiateBill={handleInitiateBill} />;
       case 'invoices':
@@ -518,9 +556,9 @@ const App: React.FC = () => {
       case 'itemMaster':
         return <ItemMasterCenter inventory={inventory} />;
       case 'expenses':
-        return <ExpensesCenter />;
+        return <ExpensesCenter expenses={expenses} onExpensesChange={setExpenses} />;
       case 'reports':
-        return <ReportsCenter invoices={invoices} bills={bills} />;
+        return <ReportsCenter invoices={invoices} bills={bills} expenses={expenses} />;
       default:
         return <FlowchartDashboard onNavigate={setCurrentPage} />;
     }

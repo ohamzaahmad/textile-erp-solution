@@ -83,3 +83,13 @@ export interface Bill {
   amountPaid: number;
   paymentHistory: PaymentRecord[];
 }
+
+export interface Expense {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  payment_method: 'Cash' | 'Bank' | 'Credit';
+  notes: string;
+}

@@ -27,7 +27,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className={`w-16 h-16 flex items-center justify-center rounded-xl border-2 shadow-sm transition-all group-hover:shadow-md ${colorClasses[color]}`}>
           <i className={`fas ${icon} text-3xl`}></i>
         </div>
-        <span className="mt-3 text-[11px] font-bold text-slate-600 text-center max-w-[90px] leading-tight group-hover:text-red-700 uppercase tracking-tighter">
+        <span className="mt-3 text-[11px] font-bold text-slate-600 text-center max-w-22.5 leading-tight group-hover:text-red-700 uppercase tracking-tighter">
           {label}
         </span>
       </div>

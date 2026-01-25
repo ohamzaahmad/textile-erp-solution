@@ -1,19 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { expensesAPI } from '../api';
+import { Expense } from '../types';
 
-interface Expense {
-  id: string;
-  date: string;
-  category: string;
-  description: string;
-  amount: number;
-  paymentMethod: 'Cash' | 'Bank' | 'Credit';
-  notes: string;
+interface ExpensesCenterProps {
+  expenses: Expense[];
+  onExpensesChange: (expenses: Expense[]) => void;
 }
 
-const ExpensesCenter: React.FC = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+const ExpensesCenter: React.FC<ExpensesCenterProps> = ({ expenses: propExpenses, onExpensesChange }) => {
+  const [expenses, setExpenses] = useState<Expense[]>(propExpenses);
   const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Form state
   const [category, setCategory] = useState('Office Rent');
@@ -34,24 +32,51 @@ const ExpensesCenter: React.FC = () => {
     'Other Expenses'
   ];
 
-  const handleAddExpense = () => {
+  useEffect(() => {
+    loadExpenses();
+  }, []);
+
+  useEffect(() => {
+    setExpenses(propExpenses);
+  }, [propExpenses]);
+
+  const loadExpenses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await expensesAPI.getAll();
+      setExpenses(data);
+      onExpensesChange(data);
+    } catch (error) {
+      console.error('Error loading expenses:', error);
+      alert('Failed to load expenses');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddExpense = async () => {
     if (!description || amount <= 0) {
       alert('Please enter description and valid amount');
       return;
     }
 
-    const newExpense: Expense = {
-      id: `EXP-${Date.now()}`,
-      date: new Date().toISOString().slice(0, 10),
-      category,
-      description,
-      amount,
-      paymentMethod,
-      notes
-    };
+    try {
+      const newExpense = {
+        date: new Date().toISOString().slice(0, 10),
+        category,
+        description,
+        amount,
+        payment_method: paymentMethod,
+        notes
+      };
 
-    setExpenses([newExpense, ...expenses]);
-    resetForm();
+      await expensesAPI.create(newExpense);
+      await loadExpenses();
+      resetForm();
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      alert('Failed to add expense');
+    }
   };
 
   const resetForm = () => {
@@ -63,13 +88,19 @@ const ExpensesCenter: React.FC = () => {
     setNotes('');
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this expense?')) {
-      setExpenses(expenses.filter(e => e.id !== id));
+      try {
+        await expensesAPI.delete(id);
+        await loadExpenses();
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+        alert('Failed to delete expense');
+      }
     }
   };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
 
   return (
     <div className="bg-white rounded border border-slate-300 shadow-xl flex flex-col h-full overflow-hidden">
@@ -95,7 +126,7 @@ const ExpensesCenter: React.FC = () => {
 
       {/* Add Expense Modal */}
       {isAdding && (
-        <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/70 z-70 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-[#7d2b3f]">
             <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center space-x-2">
@@ -200,7 +231,7 @@ const ExpensesCenter: React.FC = () => {
           <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">This Month</p>
             <p className="text-2xl font-black text-green-600">
-              Rs. {expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s, e) => s + e.amount, 0).toLocaleString()}
+              Rs. {expenses.filter(e => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s, e) => s + Number(e.amount || 0), 0).toLocaleString()}
             </p>
           </div>
         </div>
@@ -232,14 +263,14 @@ const ExpensesCenter: React.FC = () => {
                   {expense.description}
                   {expense.notes && <p className="text-[10px] text-slate-400 mt-1 italic">{expense.notes}</p>}
                 </td>
-                <td className="p-3 text-right font-black text-red-600">Rs. {expense.amount.toLocaleString()}</td>
+                <td className="p-3 text-right font-black text-red-600">Rs. {Number(expense.amount || 0).toLocaleString()}</td>
                 <td className="p-3 text-center">
                   <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase ${
-                    expense.paymentMethod === 'Cash' ? 'bg-green-100 text-green-700' : 
-                    expense.paymentMethod === 'Bank' ? 'bg-blue-100 text-blue-700' : 
+                    expense.payment_method === 'Cash' ? 'bg-green-100 text-green-700' : 
+                    expense.payment_method === 'Bank' ? 'bg-blue-100 text-blue-700' : 
                     'bg-orange-100 text-orange-700'
                   }`}>
-                    {expense.paymentMethod}
+                    {expense.payment_method}
                   </span>
                 </td>
                 <td className="p-3 text-center">

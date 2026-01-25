@@ -52,7 +52,7 @@ const Calendar: React.FC<CalendarProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute top-10 right-10 w-72 bg-white rounded-lg shadow-2xl border border-slate-300 z-[100] overflow-hidden animate-in fade-in slide-in-from-top-4">
+    <div className="absolute top-10 right-10 w-72 bg-white rounded-lg shadow-2xl border border-slate-300 z-100 overflow-hidden animate-in fade-in slide-in-from-top-4">
       <div className="bg-[#7d2b3f] p-3 flex justify-between items-center text-white text-xs font-bold">
         <span>HA FABRICS Calendar</span>
         <button onClick={onClose} className="hover:text-red-200 transition-all duration-200 hover:rotate-90"><i className="fas fa-times"></i></button>

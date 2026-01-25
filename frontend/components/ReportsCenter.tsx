@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Invoice, Bill } from '../types';
+import { Invoice, Bill, Expense } from '../types';
 import { 
   BarChart, 
   Bar, 
@@ -18,11 +18,14 @@ import {
 interface ReportsCenterProps {
   invoices: Invoice[];
   bills: Bill[];
+  expenses: Expense[];
 }
 
-const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
+const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses }) => {
   const totalSales = invoices.reduce((acc, curr) => acc + curr.total, 0);
-  const totalExpenses = bills.reduce((acc, curr) => acc + curr.total, 0);
+  const totalBillExpenses = bills.reduce((acc, curr) => acc + curr.total, 0);
+  const totalOperationalExpenses = expenses.reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const totalExpenses = totalBillExpenses + totalOperationalExpenses;
   const netProfit = totalSales - totalExpenses;
 
   const data = [
@@ -50,7 +53,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
               <i className="fas fa-arrow-down text-xl"></i>
            </div>
            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Cash Out (Bills)</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Cash Out (Purchases + Expenses)</p>
               <p className="text-xl font-bold text-slate-700">Rs. {totalExpenses.toLocaleString()}</p>
            </div>
         </div>
@@ -64,63 +67,6 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
                 Rs. {netProfit.toLocaleString()}
               </p>
            </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-600 mb-6 flex items-center">
-            <i className="fas fa-chart-bar mr-2 text-blue-500"></i>
-            Revenue vs Expenses Overview
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip 
-                   contentStyle={{ fontSize: '10px', borderRadius: '8px' }}
-                   formatter={(value: any) => [`Rs. ${value.toLocaleString()}`, 'Amount']}
-                />
-                <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                   {data.map((entry, index) => (
-                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                   ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-600 mb-6 flex items-center">
-            <i className="fas fa-chart-pie mr-2 text-blue-500"></i>
-            Cash Flow Distribution
-          </h3>
-          <div className="h-64 flex justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Sales', value: totalSales },
-                    { name: 'Expenses', value: totalExpenses },
-                  ]}
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  <Cell fill="#10b981" />
-                  <Cell fill="#ef4444" />
-                </Pie>
-                <Tooltip 
-                   formatter={(value: any) => [`Rs. ${value.toLocaleString()}`, 'Total']}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
         </div>
       </div>
 
@@ -143,24 +89,26 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills }) => {
             </tr>
           </thead>
           <tbody>
-            {invoices.length === 0 && bills.length === 0 ? (
+            {invoices.length === 0 && bills.length === 0 && expenses.length === 0 ? (
                <tr>
                  <td colSpan={6} className="p-10 text-center text-slate-400 italic">No daily logs available</td>
                </tr>
             ) : (
-              [...invoices, ...bills]
+              [...invoices.map((inv: any) => ({ ...inv, type: 'SALES', amount: inv.total, isIncome: true })),
+               ...bills.map((bill: any) => ({ ...bill, type: 'PURCHASE', amount: bill.total, isIncome: false })),
+               ...expenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: exp.amount, isIncome: false }))]
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map((item: any, idx) => (
                 <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="p-2">{item.date}</td>
                   <td className="p-2">
-                    <span className={`font-bold ${item.customerId ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.customerId ? 'SALES' : 'PURCHASE'}
+                    <span className={`font-bold ${item.isIncome ? 'text-green-600' : 'text-red-600'}`}>
+                      {item.type}
                     </span>
                   </td>
-                  <td className="p-2">{item.id}</td>
-                  <td className="p-2 text-right text-green-600">{item.customerId ? `+ ${item.total.toLocaleString()}` : '-'}</td>
-                  <td className="p-2 text-right text-red-600">{item.vendorId ? `- ${item.total.toLocaleString()}` : '-'}</td>
+                  <td className="p-2">{item.type === 'EXPENSE' ? item.description : item.id}</td>
+                  <td className="p-2 text-right text-green-600">{item.isIncome ? `+ ${item.amount.toLocaleString()}` : '-'}</td>
+                  <td className="p-2 text-right text-red-600">{!item.isIncome ? `- ${item.amount.toLocaleString()}` : '-'}</td>
                   <td className="p-2 text-right font-bold">---</td>
                 </tr>
               ))

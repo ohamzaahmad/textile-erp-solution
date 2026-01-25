@@ -131,7 +131,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
 
       {/* Receive Multi-Fabric Lot Modal */}
       {isReceiving && (
-        <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/70 z-70 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-[#7d2b3f]">
             <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center space-x-2">
@@ -204,7 +204,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                     </div>
                     <button 
                       onClick={handleAddFabricToLot}
-                      className="bg-[#7d2b3f] text-white p-2 rounded hover:bg-[#5a1f2d] h-[34px] transition-colors"
+                      className="bg-[#7d2b3f] text-white p-2 rounded hover:bg-[#5a1f2d] h-8.5 transition-colors"
                       title="Add to List"
                     >
                       <i className="fas fa-plus"></i>

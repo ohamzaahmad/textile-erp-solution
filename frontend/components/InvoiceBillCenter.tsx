@@ -41,7 +41,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const [creationTid, setCreationTid] = useState('');
   const [creationAmount, setCreationAmount] = useState<number>(0);
   const [creationNotes, setCreationNotes] = useState('');
-  const [creationDueDate, setCreationDueDate] = useState('');
+  const [creationDueDays, setCreationDueDays] = useState<number>(30);
   const [currentLineItem, setCurrentLineItem] = useState({ itemId: '', meters: 0, price: 0 });
 
   // Settlement Modal States
@@ -129,7 +129,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       id: `${type.slice(0, 3)}-${Date.now()}`,
       [type === 'Invoice' ? 'customerId' : 'vendorId']: selectedEntityId,
       date: new Date().toISOString().slice(0, 10),
-      dueDate: creationDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      dueDate: new Date(Date.now() + (creationDueDays || 30) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
       items: lineItems.map(li => ({ itemId: li.itemId, meters: li.meters, price: li.price })),
       total: totalAmount,
       amountPaid: initialPayment ? creationAmount : 0,
@@ -149,7 +149,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
     setCreationAmount(0);
     setCreationTid('');
     setCreationNotes('');
-    setCreationDueDate('');
+    setCreationDueDays(30);
   };
 
   const handleOpenSettle = (item: any) => {
@@ -195,10 +195,15 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
   // Sort items: overdue first, then by date
   const sortedItems = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return [...items].sort((a, b) => {
-      const aOverdue = a.status !== 'Paid' && a.dueDate && a.dueDate < today;
-      const bOverdue = b.status !== 'Paid' && b.dueDate && b.dueDate < today;
+      const aDueDate = a.dueDate ? new Date(a.dueDate) : null;
+      const bDueDate = b.dueDate ? new Date(b.dueDate) : null;
+      const aDaysRemaining = aDueDate ? Math.ceil((aDueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+      const bDaysRemaining = bDueDate ? Math.ceil((bDueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+      const aOverdue = a.status !== 'Paid' && aDaysRemaining !== null && aDaysRemaining < 0;
+      const bOverdue = b.status !== 'Paid' && bDaysRemaining !== null && bDaysRemaining < 0;
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;
       return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -211,8 +216,8 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       : vendors.find(v => v.id === doc.vendorId);
 
     return (
-      <div className="fixed inset-0 bg-slate-800/90 z-[70] flex flex-col items-center justify-start p-10 overflow-auto custom-scrollbar no-print">
-        <div className="flex justify-between w-full max-w-4xl mb-6">
+      <div className="fixed inset-0 bg-slate-800/90 z-70 flex flex-col items-center justify-start p-10 overflow-auto custom-scrollbar">
+        <div className="flex justify-between w-full max-w-4xl mb-6 no-print">
            <button onClick={() => setPrintingDoc(null)} className="bg-white/10 text-white px-6 py-2 rounded-lg font-bold hover:bg-white/20 transition-all border border-white/20 uppercase tracking-widest text-[10px]">
              <i className="fas fa-arrow-left mr-2"></i> Back to ERP
            </button>
@@ -220,7 +225,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
              <i className="fas fa-print mr-2"></i> Print to PDF / Printer
            </button>
         </div>
-        
+
         <div id="printable-area" className="w-full max-w-4xl bg-white p-12 shadow-2xl rounded-sm border border-slate-200">
            {/* Header Branding */}
            <div className="flex justify-between items-start border-b-2 border-slate-800 pb-10 mb-10">
@@ -345,7 +350,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
 
       {/* Settle Modal */}
       {settlingItem && (
-        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/70 z-60 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-5 text-white font-black text-sm flex justify-between items-center tracking-widest uppercase">
               <span>{type === 'Bill' ? 'Purchase Payment' : 'Receive Funds'}</span>
@@ -442,7 +447,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     <p className="text-[14px] font-black text-slate-600 mt-2">LOT #{lineItems[0].lotNumber}</p>
                   )}
                 </div>
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 min-w-[220px] shadow-inner">
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 min-w-55 shadow-inner">
                    <div className="flex justify-between text-[10px] font-black text-slate-400 mb-2 uppercase tracking-widest"><span>ISSUE DATE</span> <span>DOC#</span></div>
                    <p className="text-sm font-black text-slate-800">{new Date().toLocaleDateString()}</p>
                 </div>
@@ -588,15 +593,16 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
             <div className="p-12 flex justify-between items-start bg-slate-50/40">
                <div className="max-w-xs space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Due Date</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Payment Due In (Days)</label>
                     <input 
-                      type="date"
-                      value={creationDueDate}
-                      onChange={e => setCreationDueDate(e.target.value)}
-                      min={new Date().toISOString().slice(0, 10)}
-                      className="w-full border border-slate-200 rounded-xl p-3 text-sm outline-none bg-white shadow-inner font-bold"
+                      type="number"
+                      value={creationDueDays}
+                      onChange={e => setCreationDueDays(parseInt(e.target.value) || 30)}
+                      min="1"
+                      max="365"
+                      className="w-full border border-slate-200 rounded-xl p-3 text-lg font-black text-[#7d2b3f] outline-none bg-white shadow-inner text-center"
                     />
-                    <p className="text-[9px] text-slate-400 mt-1 italic">Leave empty for 30 days from today</p>
+                    <p className="text-[9px] text-slate-400 mt-1 italic">Number of days from today (default: 30 days)</p>
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Internal Memo / Notes</label>
@@ -608,7 +614,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     ></textarea>
                   </div>
                </div>
-               <div className="min-w-[320px] space-y-6">
+               <div className="min-w-80 space-y-6">
                   <div className="flex justify-between border-t border-slate-200 pt-6">
                      <span className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Document Total</span>
                      <span className="text-4xl font-black text-[#7d2b3f]">PKR {totalAmount.toLocaleString()}</span>
@@ -631,7 +637,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               <tr>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Doc #</th>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Date</th>
-                <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Due Date</th>
+                <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Days Remaining</th>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">{type === 'Invoice' ? 'Customer' : 'Supplier'}</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Settlement Log</th>
                 <th className="p-5 text-right font-black text-slate-500 uppercase tracking-widest">Total Amount</th>
@@ -641,8 +647,11 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
             </thead>
             <tbody className="divide-y divide-slate-50">
               {sortedItems.map((item: any) => {
-                const today = new Date().toISOString().slice(0, 10);
-                const isOverdue = item.status !== 'Paid' && item.dueDate && item.dueDate < today;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const dueDate = item.dueDate ? new Date(item.dueDate) : null;
+                const daysRemaining = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+                const isOverdue = item.status !== 'Paid' && daysRemaining !== null && daysRemaining < 0;
                 return (
                 <React.Fragment key={item.id}>
                   <tr className={`hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}>
@@ -651,9 +660,21 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                       {item.id}
                     </td>
                     <td className="p-5 text-slate-600 font-bold">{item.date ? new Date(item.date).toLocaleDateString() : ''}</td>
-                    <td className={`p-5 font-bold ${isOverdue ? 'text-red-600' : 'text-slate-600'}`}>
-                      {item.dueDate ? new Date(item.dueDate).toLocaleDateString() : 'N/A'}
-                      {isOverdue && <span className="ml-2 text-[9px] bg-red-600 text-white px-2 py-0.5 rounded-full uppercase font-black">Overdue</span>}
+                    <td className="p-5 text-center">
+                      {item.status === 'Paid' ? (
+                        <span className="text-green-600 font-black text-xs uppercase">Paid</span>
+                      ) : daysRemaining !== null ? (
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className={`text-2xl font-black ${isOverdue ? 'text-red-600' : daysRemaining <= 7 ? 'text-orange-600' : 'text-green-600'}`}>
+                            {Math.abs(daysRemaining)}
+                          </span>
+                          <span className="text-[10px] font-black uppercase text-slate-400">
+                            {isOverdue ? 'Days Overdue' : 'Days Left'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs">N/A</span>
+                      )}
                     </td>
                     <td className="p-5 font-black text-slate-800 uppercase tracking-tighter">
                       {type === 'Invoice' ? customers.find(c => c.id === item.customerId)?.name : vendors.find(v => v.id === item.vendorId)?.name}

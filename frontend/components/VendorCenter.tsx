@@ -8,22 +8,25 @@ interface VendorCenterProps {
   bills: Bill[];
   onPayBill: (billId: string, payment: PaymentRecord) => void;
   onAddVendor: (vendor: Vendor) => Promise<Vendor | null>;
+  onUpdateVendor?: (vendor: Vendor) => Promise<Vendor | null>;
+  currentUser?: { username: string; role: string; name: string } | null;
 }
 
-const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, onAddVendor }) => {
+const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, onAddVendor, onUpdateVendor, currentUser }) => {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(vendors[0]?.id || null);
   const [viewMode, setViewMode] = useState<'bills' | 'ledger'>('bills');
   const [payingBill, setPayingBill] = useState<Bill | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreatingVendor, setIsCreatingVendor] = useState(false);
+  const [isEditingVendor, setIsEditingVendor] = useState(false);
+  const [editVendorData, setEditVendorData] = useState<any>(null);
   
   const [newVendorData, setNewVendorData] = useState({ 
     name: '', 
     contact: '', 
     address: '', 
-    bankDetails: '',
-    shortDescription: ''
+    bankDetails: ''
   });
 
   const selectedVendor = vendors.find(v => v.id === selectedVendorId);
@@ -77,17 +80,42 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
     };
     const result = await onAddVendor(vendor);
     setIsCreatingVendor(false);
-    setNewVendorData({ name: '', contact: '', address: '', bankDetails: '', shortDescription: '' });
+    setNewVendorData({ name: '', contact: '', address: '', bankDetails: '' });
     if (result) {
       setSelectedVendorId(result.id); // Use the ID from backend response
     }
+  };
+
+  const openEditVendor = () => {
+    if (!selectedVendor) return;
+    setEditVendorData({ ...selectedVendor });
+    setIsEditingVendor(true);
+  };
+
+  const handleSaveEditVendor = async () => {
+    if (!editVendorData || !editVendorData.name) {
+      alert('Supplier name required');
+      return;
+    }
+    if (!onUpdateVendor) return;
+    const updated = await onUpdateVendor({
+      id: editVendorData.id,
+      name: editVendorData.name,
+      contact: editVendorData.contact,
+      address: editVendorData.address,
+      bankDetails: editVendorData.bankDetails,
+      balance: selectedVendor?.balance || 0,
+      logs: selectedVendor?.logs || []
+    });
+    setIsEditingVendor(false);
+    if (updated) setSelectedVendorId(String(updated.id));
   };
 
   return (
     <div className="flex h-full bg-[#f0f3f6] rounded border border-[#a3b6cc] overflow-hidden shadow-2xl">
       {/* New Vendor Modal */}
       {isCreatingVendor && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
               <span>Add New Supplier</span>
@@ -107,10 +135,6 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Address</label>
                   <input type="text" value={newVendorData.address} onChange={e => setNewVendorData({...newVendorData, address: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" placeholder="Street, City, Country" />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Short Description</label>
-                  <input type="text" value={newVendorData.shortDescription} onChange={e => setNewVendorData({...newVendorData, shortDescription: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" placeholder="Optional short notes" />
-                </div>
               </div>
               <div className="pt-4 flex justify-end space-x-3 border-t">
                 <button onClick={() => setIsCreatingVendor(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
@@ -123,7 +147,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
 
       {/* Settle Modal */}
       {payingBill && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-4 text-white font-bold text-sm flex justify-between items-center">
               <span>Settle Purchase #{payingBill.id}</span>
@@ -140,8 +164,44 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
         </div>
       )}
 
+      {/* Edit Vendor Modal */}
+      {isEditingVendor && editVendorData && (
+        <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
+              <span>Edit Supplier</span>
+              <button onClick={() => setIsEditingVendor(false)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Supplier Name</label>
+                  <input type="text" value={editVendorData.name} onChange={e => setEditVendorData({...editVendorData, name: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Contact Phone</label>
+                  <input type="text" value={editVendorData.contact} onChange={e => setEditVendorData({...editVendorData, contact: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Address</label>
+                  <input type="text" value={editVendorData.address} onChange={e => setEditVendorData({...editVendorData, address: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Bank Details</label>
+                  <input type="text" value={editVendorData.bankDetails} onChange={e => setEditVendorData({...editVendorData, bankDetails: e.target.value})} className="w-full border border-slate-300 rounded p-2 text-sm outline-none" />
+                </div>
+              </div>
+              <div className="pt-4 flex justify-end space-x-3 border-t">
+                <button onClick={() => setIsEditingVendor(false)} className="px-4 py-2 text-xs font-bold text-slate-500 border rounded">Cancel</button>
+                <button onClick={handleSaveEditVendor} className="px-6 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar List */}
-      <div className="w-[280px] bg-white border-r border-[#a3b6cc] flex flex-col shrink-0">
+      <div className="w-70 bg-white border-r border-[#a3b6cc] flex flex-col shrink-0">
         <div className="p-4 bg-white shadow-sm">
           <div className="flex items-center justify-between mb-3 gap-2">
             <span className="text-[11px] font-bold text-slate-700 uppercase whitespace-nowrap">Active Vendors</span>
@@ -177,9 +237,23 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
             <div className="p-10 border-b border-[#e1e8ef] bg-white flex justify-between items-start">
               <div className="space-y-3">
                 <h2 className="text-4xl font-light text-slate-400 tracking-tight">Supplier Information</h2>
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
                    <p className="text-xl font-bold text-slate-800 uppercase tracking-tighter">{selectedVendor.name}</p>
-                   <p className="text-sm text-slate-500 font-medium">{selectedVendor.contact}</p>
+                   <div className="space-y-1">
+                     <p className="text-sm text-slate-600 font-medium flex items-center">
+                       <i className="fas fa-phone mr-2 text-slate-400"></i> {selectedVendor.contact || 'No contact provided'}
+                     </p>
+                     {selectedVendor.address && (
+                       <p className="text-sm text-slate-600 font-medium flex items-center">
+                         <i className="fas fa-map-marker-alt mr-2 text-slate-400"></i> {selectedVendor.address}
+                       </p>
+                     )}
+                     {selectedVendor.bankDetails && (
+                       <p className="text-sm text-slate-600 font-medium flex items-center">
+                         <i className="fas fa-university mr-2 text-slate-400"></i> {selectedVendor.bankDetails}
+                       </p>
+                     )}
+                   </div>
                 </div>
               </div>
               <div className="text-right">
@@ -188,6 +262,11 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                   PKR {Math.abs(selectedVendor.balance).toLocaleString()}
                 </p>
               </div>
+            </div>
+            <div className="p-4 border-b border-[#e1e8ef] bg-white text-right">
+              {currentUser?.role === 'manager' && (
+                <button onClick={openEditVendor} className="px-4 py-1 text-xs font-bold bg-[#7d2b3f] text-white rounded">Edit Supplier</button>
+              )}
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden">
