@@ -7,9 +7,11 @@ interface SidebarProps {
   onNavigate: (page: Page) => void;
   role: Role;
   onLogout: () => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogout, isOpen, onToggle }) => {
   const allMenuItems = [
     { id: 'home', label: 'Home', icon: 'fa-home', roles: ['manager'] },
     { id: 'vendors', label: 'Supplier Center', icon: 'fa-truck', roles: ['manager'] },
@@ -25,7 +27,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
   const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
 
   return (
-    <aside className="w-56 bg-[#7d2b3f] text-white flex flex-col h-full shadow-xl z-20">
+    <>
+      <aside className={`${isOpen ? 'w-56' : 'w-0'} fixed left-0 bg-[#7d2b3f] text-white flex flex-col shadow-xl z-40 transition-all duration-300 overflow-hidden overflow-x-hidden box-border`}
+        style={{ top: '2rem', height: 'calc(100vh - 2rem)' }}>
       <div className="p-4 bg-[#5a1f2d] border-b border-[#3d1420]">
         <h1 className="text-lg font-bold flex items-center space-x-2">
           <i className="fas fa-leaf"></i>
@@ -34,20 +38,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
         <p className="text-[10px] opacity-70 mt-1 uppercase tracking-widest">Enterprise Edition 2024</p>
       </div>
 
-      <nav className="flex-1 overflow-y-auto mt-2">
+      <nav className="flex-1 overflow-y-auto mt-2 overflow-x-hidden box-border">
         <div className="px-3 py-2 text-[10px] font-bold text-red-200 uppercase opacity-50">Navigation Panel</div>
         {filteredItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => onNavigate(item.id as Page)}
-            className={`w-full flex items-center space-x-3 px-4 py-3 text-sm transition-all duration-300 ease-in-out transform ${
+            onClick={() => { onNavigate(item.id as Page); if (isOpen) onToggle(); }}
+            className={`w-full box-border flex items-center space-x-3 px-4 py-3 text-sm transition-all duration-300 ease-in-out transform ${
               currentPage === item.id 
-                ? 'bg-white text-[#7d2b3f] font-semibold shadow-inner rounded-l-full ml-2 scale-105' 
+                ? 'bg-white text-[#7d2b3f] font-semibold shadow-inner rounded-l-full pl-4 scale-105' 
                 : 'hover:bg-[#9d3c52] text-red-50 hover:translate-x-1'
             }`}
           >
-            <i className={`fas ${item.icon} w-5`}></i>
-            <span>{item.label}</span>
+            <i className={`fas ${item.icon} w-5 shrink-0`}></i>
+            <span className="truncate block">{item.label}</span>
           </button>
         ))}
       </nav>
@@ -61,6 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
         </button>
       </div>
     </aside>
+    </>
   );
 };
 

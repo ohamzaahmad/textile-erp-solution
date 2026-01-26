@@ -33,6 +33,7 @@ const App: React.FC = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   
   const [pendingBillLot, setPendingBillLot] = useState<InventoryItem[] | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
@@ -646,16 +647,27 @@ const App: React.FC = () => {
         onNavigate={setCurrentPage} 
         role={currentUser.role}
         onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(s => !s)}
       />
       <div className="flex-1 flex flex-col overflow-hidden bg-[#e0e7ee]">
         <div className="h-8 bg-[#f8f9fa] border-b border-[#a3b6cc] flex items-center px-4 space-x-1 shrink-0 shadow-sm">
           {currentUser.role === 'manager' && (
-            <button 
-              onClick={() => setCurrentPage('home')}
-              className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-all duration-300 ease-in-out ${currentPage === 'home' ? 'bg-[#7d2b3f] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
-            >
-              <i className="fas fa-home"></i> <span>Home</span>
-            </button>
+            <>
+              <button
+                onClick={() => setSidebarOpen(s => !s)}
+                className="mr-2 px-2 h-full text-[12px] flex items-center justify-center border-r border-[#dee2e6] hover:bg-slate-200 text-slate-600"
+                title="Toggle menu"
+              >
+                <i className="fas fa-bars"></i>
+              </button>
+              <button 
+                onClick={() => setCurrentPage('home')}
+                className={`px-4 h-full text-[10px] font-black uppercase tracking-widest flex items-center space-x-2 border-r border-[#dee2e6] transition-all duration-300 ease-in-out ${currentPage === 'home' ? 'bg-[#7d2b3f] text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'}`}
+              >
+                <i className="fas fa-home"></i> <span>Home</span>
+              </button>
+            </>
           )}
           <div className="px-4 h-full text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center border-r border-[#dee2e6]">
             {currentPage.replace(/([A-Z])/g, ' $1')} Center
@@ -678,7 +690,7 @@ const App: React.FC = () => {
              </button>
           </div>
         </div>
-        <main className="flex-1 overflow-auto p-8 relative bg-[#eef2f6] transition-all duration-300 ease-in-out">
+        <main className={`flex-1 overflow-auto p-8 relative bg-[#eef2f6] transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-56' : ''}`}>
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {renderContent()}
           </div>
