@@ -650,8 +650,13 @@ const App: React.FC = () => {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(s => !s)}
       />
-      <div className="flex-1 flex flex-col overflow-hidden bg-[#e0e7ee]">
-        <div className="h-8 bg-[#f8f9fa] border-b border-[#a3b6cc] flex items-center px-4 space-x-1 shrink-0 shadow-sm">
+      <div className={`flex-1 flex flex-col overflow-hidden bg-[#e0e7ee] transition-all duration-300 ${sidebarOpen ? 'lg:ml-56' : ''}`}>
+        { /* Backdrop for small screens when sidebar open */ }
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
+
+        <div className="h-8 bg-[#f8f9fa] border-b border-[#a3b6cc] flex items-center px-4 space-x-1 shrink-0 shadow-sm relative z-50">
           {currentUser.role === 'manager' && (
             <>
               <button
@@ -669,8 +674,18 @@ const App: React.FC = () => {
               </button>
             </>
           )}
-          <div className="px-4 h-full text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center border-r border-[#dee2e6]">
-            {currentPage.replace(/([A-Z])/g, ' $1')} Center
+          <div className="px-4 h-full flex items-center border-r border-[#dee2e6]">
+            <div className="text-[10px] text-slate-500 font-black uppercase tracking-wider">
+              {currentPage.replace(/([A-Z])/g, ' $1')} Center
+            </div>
+          </div>
+
+          {/* Centered brand so it's visible across viewports */}
+          <div className="absolute inset-x-0 flex justify-center pointer-events-none">
+            <div className="pointer-events-auto flex items-center text-[#7d2b3f] font-black text-sm uppercase tracking-widest">
+              <i className="fas fa-leaf mr-2"></i>
+              <span>HA FABRICS</span>
+            </div>
           </div>
           <div className="flex-1 flex justify-end items-center text-[10px] font-black text-slate-400 uppercase space-x-4">
              <span><i className="fas fa-user-circle mr-1 text-red-400"></i> {currentUser.name}</span>
@@ -690,7 +705,7 @@ const App: React.FC = () => {
              </button>
           </div>
         </div>
-        <main className={`flex-1 overflow-auto p-8 relative bg-[#eef2f6] transition-all duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-56' : ''}`}>
+        <main className={`flex-1 overflow-auto p-8 relative bg-[#eef2f6] transition-all duration-300 ease-in-out`}>
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {renderContent()}
           </div>

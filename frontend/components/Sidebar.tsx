@@ -28,15 +28,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
 
   return (
     <>
-      <aside className={`${isOpen ? 'w-56' : 'w-0'} fixed left-0 bg-[#7d2b3f] text-white flex flex-col shadow-xl z-40 transition-all duration-300 overflow-hidden overflow-x-hidden box-border`}
-        style={{ top: '2rem', height: 'calc(100vh - 2rem)' }}>
-      <div className="p-4 bg-[#5a1f2d] border-b border-[#3d1420]">
-        <h1 className="text-lg font-bold flex items-center space-x-2">
-          <i className="fas fa-leaf"></i>
-          <span>HA FABRICS</span>
-        </h1>
-        <p className="text-[10px] opacity-70 mt-1 uppercase tracking-widest">Enterprise Edition 2024</p>
-      </div>
+      <aside className={`${isOpen ? 'w-56' : 'w-0'} fixed left-0 top-0 bg-[#7d2b3f] text-white flex flex-col shadow-xl z-30 transition-all duration-300 overflow-hidden overflow-x-hidden box-border`}
+        style={{ height: '100vh' }}>
+      {/* Sidebar header removed — brand moved to topbar for consistent visibility */}
+      <div className="h-4" />
 
       <nav className="flex-1 overflow-y-auto mt-2 overflow-x-hidden box-border">
         <div className="px-3 py-2 text-[10px] font-bold text-red-200 uppercase opacity-50">Navigation Panel</div>
