@@ -7,7 +7,7 @@ export interface User {
   name: string;
 }
 
-export type Page = 'home' | 'vendors' | 'customers' | 'inventory' | 'invoices' | 'bills' | 'reports' | 'deposits' | 'itemMaster' | 'expenses';
+export type Page = 'home' | 'vendors' | 'customers' | 'inventory' | 'invoices' | 'bills' | 'reports' | 'deposits' | 'itemMaster' | 'expenses' | 'imports';
 
 export interface Vendor {
   id: string;

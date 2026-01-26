@@ -14,6 +14,7 @@ import ItemMasterCenter from './components/ItemMasterCenter';
 import ExpensesCenter from './components/ExpensesCenter';
 import AuthPage from './components/AuthPage';
 import Toast from './components/Toast';
+import Imports from './components/Imports';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -626,6 +627,8 @@ const App: React.FC = () => {
             try { window.location.hash = `#${page === 'vendors' ? 'vendors' : 'customers'}`; } catch {}
           }}
         />;
+      case 'imports':
+        return <Imports />;
       default:
         return <FlowchartDashboard onNavigate={setCurrentPage} />;
     }

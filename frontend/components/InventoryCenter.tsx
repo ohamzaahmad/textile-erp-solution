@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { itemMasterAPI } from '../api';
 import { InventoryItem, Vendor } from '../types';
 
 interface InventoryCenterProps {
@@ -27,11 +28,31 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
   const [fabrics, setFabrics] = useState<TempFabric[]>([]);
   
   // Current Fabric Input State
+  const [fabricTypes, setFabricTypes] = useState<string[]>(['Cotton Twill', 'Denim Heavy', 'Silk Smooth', 'Linen Blend', 'Polyester Mesh', 'Velvet Soft', 'Wool Warm']);
   const [currentFabric, setCurrentFabric] = useState<Omit<TempFabric, 'id'>>({
-    type: 'Cotton Twill',
+    type: fabricTypes[0] || 'Cotton Twill',
     meters: 0,
     unitPrice: 0
   });
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const items = await itemMasterAPI.getAll();
+        if (!mounted || !Array.isArray(items)) return;
+        const names = items.filter((it: any) => it.is_active).map((it: any) => it.name);
+        if (names.length) {
+          setFabricTypes(names);
+          setCurrentFabric(prev => ({ ...prev, type: names[0] }));
+        }
+      } catch (e) {
+        // failed to load item master, keep defaults
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   const handleAddFabricToLot = () => {
     if (currentFabric.meters <= 0 || currentFabric.unitPrice <= 0) {
@@ -93,7 +114,7 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
     return groups;
   }, [inventory, searchTerm]);
 
-  const FABRIC_TYPES = ['Cotton Twill', 'Denim Heavy', 'Silk Smooth', 'Linen Blend', 'Polyester Mesh', 'Velvet Soft', 'Wool Warm'];
+  const FABRIC_TYPES = fabricTypes;
 
   return (
     <div className="bg-white rounded border border-slate-300 shadow-xl flex flex-col h-full overflow-hidden">

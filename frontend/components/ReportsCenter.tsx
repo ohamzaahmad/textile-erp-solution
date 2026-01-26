@@ -182,7 +182,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
       lines.push(line);
     });
 
-    downloadCsv(`daily-activity-${period}.csv`, lines.join('\n'));
+    downloadCsv(`cash-activity-${period}.csv`, lines.join('\n'));
   };
 
   return (
@@ -231,7 +231,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
 
       <div className="bg-white p-6 rounded border border-slate-300 shadow-sm">
         <div className="flex justify-between items-center mb-6">
-           <h3 className="text-sm font-bold text-slate-600">Daily Cash Activity Log</h3>
+           <h3 className="text-sm font-bold text-slate-600">Cash Activity Log</h3>
            <div className="flex items-center space-x-3">
              <button onClick={exportDailyLog} className="text-[10px] font-bold text-blue-600 hover:underline">
                <i className="fas fa-file-export mr-1"></i> Export to Excel
@@ -256,7 +256,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
           <tbody>
             {filteredInvoices.length === 0 && filteredBills.length === 0 && filteredExpenses.length === 0 ? (
                <tr>
-                 <td colSpan={7} className="p-10 text-center text-slate-400 italic">No daily logs available</td>
+                 <td colSpan={7} className="p-10 text-center text-slate-400 italic">No logs available</td>
                </tr>
             ) : (
               (() => {
