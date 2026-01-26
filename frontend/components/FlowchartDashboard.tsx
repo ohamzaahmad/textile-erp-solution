@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Page } from '../types';
 
 interface FlowchartDashboardProps {
@@ -136,16 +136,77 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
           </div>
         </div>
         
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-[11px] shadow-sm">
-          <h4 className="font-black text-red-800 mb-2 flex items-center uppercase tracking-tighter">
-            <i className="fas fa-lightbulb mr-2 text-red-500"></i>
-            Workflow Advice
-          </h4>
-          <p className="text-red-700 leading-relaxed font-medium">Use the <strong className="text-red-900">Create Sale</strong> screen to sell inventory. The system will track partial payments and update customer balances in real-time.</p>
-        </div>
+          <UserNoteCard />
       </div>
     </div>
   );
 };
+
+  const UserNoteCard: React.FC = () => {
+    const STORAGE_KEY = 'ha_user_note_v1';
+    const [note, setNote] = useState<string>('');
+    const [saved, setSaved] = useState<boolean>(false);
+
+    useEffect(() => {
+      try {
+        const v = localStorage.getItem(STORAGE_KEY) || '';
+        setNote(v);
+      } catch (e) {
+        console.error('Failed to read saved note', e);
+      }
+    }, []);
+
+    const handleSave = () => {
+      try {
+        const trimmed = note.trim();
+        // Only one note allowed — save the entire text as the single note
+        localStorage.setItem(STORAGE_KEY, trimmed);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } catch (e) {
+        console.error('Failed to save note', e);
+      }
+    };
+
+    const handleClear = () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        setNote('');
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1200);
+      } catch (e) {
+        console.error('Failed to clear note', e);
+      }
+    };
+
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="font-black text-slate-700 text-[11px] uppercase tracking-widest flex items-center">
+            <i className="fas fa-sticky-note mr-2 text-[#7d2b3f]"></i>
+            Quick Note
+          </h4>
+          <div className="text-xs text-slate-400">Only one note saved</div>
+        </div>
+
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="Write a short note to remember..."
+          className="w-full min-h-24 border border-slate-100 rounded p-3 text-sm resize-y outline-none bg-slate-50"
+        />
+
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <button onClick={handleSave} className="px-4 py-2 text-xs font-bold bg-[#7d2b3f] text-white rounded">Save</button>
+            <button onClick={handleClear} className="px-3 py-2 text-xs font-bold border rounded text-slate-600">Clear</button>
+          </div>
+          <div className="text-xs text-slate-500">
+            {saved ? <span className="text-green-600 font-black">Saved</span> : <span>Auto-saved to browser</span>}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
 export default FlowchartDashboard;

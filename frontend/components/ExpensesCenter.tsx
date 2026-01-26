@@ -160,7 +160,7 @@ const ExpensesCenter: React.FC<ExpensesCenterProps> = ({ expenses: propExpenses,
                   >
                     <option value="Cash">Cash</option>
                     <option value="Bank">Bank Transfer</option>
-                    <option value="Credit">Credit</option>
+                    {/* <option value="Credit">Credit</option> */}
                   </select>
                 </div>
               </div>

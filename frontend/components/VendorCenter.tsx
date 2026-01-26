@@ -125,7 +125,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
       {/* New Vendor Modal */}
       {isCreatingVendor && (
         <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
               <span>Add New Supplier</span>
               <button onClick={() => setIsCreatingVendor(false)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
@@ -176,7 +176,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
       {/* Edit Vendor Modal */}
       {isEditingVendor && editVendorData && (
         <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="bg-[#7d2b3f] p-3 text-white font-bold text-sm flex justify-between items-center">
               <span>Edit Supplier</span>
               <button onClick={() => setIsEditingVendor(false)} className="hover:text-red-200"><i className="fas fa-times"></i></button>
