@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Invoice, Bill, Vendor, Customer, InventoryItem, PaymentMethod, PaymentRecord } from '../types';
+import PrintPreview from './PrintPreview';
 
 interface InvoiceBillCenterProps {
   type: 'Invoice' | 'Bill';
@@ -210,143 +211,14 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
     });
   }, [items]);
 
-  const PrintView = ({ doc }: { doc: any }) => {
-    const entity = type === 'Invoice' 
-      ? customers.find(c => c.id === doc.customerId) 
-      : vendors.find(v => v.id === doc.vendorId);
-
-    return (
-      <div className="fixed inset-0 bg-slate-800/90 z-70 flex flex-col items-center justify-start p-10 overflow-auto custom-scrollbar">
-        <div className="flex justify-between w-full max-w-4xl mb-6 no-print">
-           <button onClick={() => setPrintingDoc(null)} className="bg-white/10 text-white px-6 py-2 rounded-lg font-bold hover:bg-white/20 transition-all border border-white/20 uppercase tracking-widest text-[10px]">
-             <i className="fas fa-arrow-left mr-2"></i> Back to ERP
-           </button>
-           <button onClick={() => window.print()} className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-green-500 transition-all shadow-xl uppercase tracking-widest text-[10px]">
-             <i className="fas fa-print mr-2"></i> Print to PDF / Printer
-           </button>
-        </div>
-
-        <div id="printable-area" className="w-full max-w-4xl bg-white p-12 shadow-2xl rounded-sm border border-slate-200">
-           {/* Header Branding */}
-           <div className="flex justify-between items-start border-b-2 border-slate-800 pb-10 mb-10">
-              <div className="flex items-center space-x-4">
-                 <div className="w-16 h-16 bg-slate-900 flex items-center justify-center text-white rounded-xl">
-                   <i className="fas fa-leaf text-3xl"></i>
-                 </div>
-                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">HA FABRICS</h1>
-                    <p className="text-[10px] font-black text-slate-400 tracking-[3px] uppercase">Enterprise Fabric Solutions</p>
-                 </div>
-              </div>
-              <div className="text-right">
-                 <h2 className="text-5xl font-black text-slate-200 uppercase tracking-tighter -mt-2 mb-2">{type}</h2>
-                 <p className="text-xs font-black text-slate-800">DOCUMENT ID: <span className="font-mono">{doc.id}</span></p>
-              </div>
-           </div>
-
-           {/* Entity & Details */}
-           <div className="grid grid-cols-2 gap-16 mb-16">
-              <div>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{type === 'Invoice' ? 'SOLD TO' : 'SUPPLIER SOURCE'}</p>
-                 <div className="space-y-1">
-                    <p className="text-xl font-black text-slate-800 uppercase">{entity?.name || 'Unknown Party'}</p>
-                    <p className="text-sm text-slate-500 font-medium">Contact: {entity?.contact || 'N/A'}</p>
-                    <p className="text-sm text-slate-500 font-medium">{entity?.address || 'No registered address on file.'}</p>
-                 </div>
-              </div>
-              <div className="bg-slate-50 p-6 border border-slate-100 rounded-xl grid grid-cols-2 gap-4">
-                 <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">DATE ISSUED</p>
-                      <p className="text-xs font-black text-slate-800">{doc.date ? new Date(doc.date).toLocaleDateString() : ''}</p>
-                 </div>
-                 <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">DUE DATE</p>
-                      <p className="text-xs font-black text-slate-800">{doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : 'Upon Receipt'}</p>
-                 </div>
-                 <div className="col-span-2 mt-2 pt-2 border-t border-slate-200">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">CURRENT STATUS</p>
-                    <p className={`text-xs font-black uppercase ${doc.status === 'Paid' ? 'text-green-600' : 'text-red-600'}`}>{doc.status}</p>
-                 </div>
-              </div>
-           </div>
-
-           {/* Table */}
-           <table className="w-full text-left mb-16">
-              <thead className="border-b-2 border-slate-800">
-                 <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    <th className="py-4">Item Description</th>
-                    <th className="py-4 text-right">Qty (M)</th>
-                    <th className="py-4 text-right">Unit Rate</th>
-                    <th className="py-4 text-right">Amount (PKR)</th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                 {doc.items.map((it: any, idx: number) => {
-                    const inv = inventory.find(i => i.id === it.itemId);
-                    return (
-                       <tr key={idx}>
-                          <td className="py-6 font-bold text-slate-800">
-                             {/* HIDE LOT NUMBERS ON INVOICES FOR CLIENTS */}
-                             {type !== 'Invoice' && (
-                                <span className="text-[9px] bg-slate-100 px-2 py-0.5 rounded-sm mr-3 font-black text-slate-500">#{inv?.lotNumber || 'N/A'}</span>
-                             )}
-                             {inv?.type || 'Standard Fabric'}
-                          </td>
-                          <td className="py-6 text-right font-mono text-slate-600">{it.meters.toFixed(2)}m</td>
-                          <td className="py-6 text-right font-mono text-slate-600">{it.price.toLocaleString()}</td>
-                          <td className="py-6 text-right font-black text-slate-800">{(it.meters * it.price).toLocaleString()}</td>
-                       </tr>
-                    );
-                 })}
-              </tbody>
-           </table>
-
-           {/* Totals */}
-           <div className="flex justify-between items-start mb-20">
-              <div className="w-1/2">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Terms & Notes</p>
-                 <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                    All fabrics are subject to strict quality control. Refunds only accepted within 7 days of delivery in original condition. 
-                    Bank transfers should include document ID as reference.
-                 </p>
-              </div>
-              <div className="w-1/3 space-y-3">
-                 <div className="flex justify-between text-xs font-bold text-slate-500">
-                    <span>Subtotal</span>
-                    <span>PKR {doc.total.toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between text-xs font-bold text-slate-500">
-                    <span>Amount Paid</span>
-                    <span className="text-green-600">- PKR {doc.amountPaid.toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between pt-4 border-t-2 border-slate-800 text-lg font-black text-slate-800 uppercase tracking-tighter">
-                    <span>Total Balance</span>
-                    <span>PKR {(doc.total - doc.amountPaid).toLocaleString()}</span>
-                 </div>
-              </div>
-           </div>
-
-           {/* Footer Signatures */}
-           <div className="flex justify-between pt-16 border-t border-slate-100 mt-20">
-              <div className="w-48 border-t border-slate-300 text-center pt-2">
-                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer Signature</p>
-              </div>
-              <div className="text-center">
-                 <p className="text-[10px] font-bold text-slate-400 italic">Thank you for choosing HA FABRICS</p>
-              </div>
-              <div className="w-48 border-t border-slate-300 text-center pt-2">
-                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Authorized By</p>
-              </div>
-           </div>
-        </div>
-      </div>
-    );
-  };
+  // Print view moved to shared component PrintPreview
 
   return (
     <div className="bg-white rounded-xl border border-slate-300 shadow-xl flex flex-col h-full overflow-hidden">
       {/* Print Preview Modal */}
-      {printingDoc && <PrintView doc={printingDoc} />}
+      {printingDoc && (
+        <PrintPreview doc={printingDoc} type={type} customers={customers} vendors={vendors} inventory={inventory} onClose={() => setPrintingDoc(null)} />
+      )}
 
       {/* Settle Modal */}
       {settlingItem && (

@@ -592,9 +592,9 @@ const App: React.FC = () => {
         const receivables = invoices.reduce((acc, i) => acc + (parseFloat(String(i.total || 0)) - parseFloat(String(i.amountPaid || 0))), 0);
         return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables }} />;
       case 'vendors':
-        return <VendorCenter vendors={vendors} bills={bills} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} selectedId={selectedVendorId} />;
+        return <VendorCenter vendors={vendors} bills={bills} inventory={inventory} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} selectedId={selectedVendorId} />;
         case 'customers':
-          return <CustomerCenter customers={customers} invoices={invoices} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} selectedId={selectedCustomerId} />;
+          return <CustomerCenter customers={customers} invoices={invoices} inventory={inventory} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} selectedId={selectedCustomerId} />;
       case 'inventory':
         return <InventoryCenter inventory={inventory} setInventory={setInventory} vendors={vendors} onReceive={handleReceiveStock} onInitiateBill={handleInitiateBill} />;
       case 'invoices':
