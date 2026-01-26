@@ -27,7 +27,7 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className={`w-16 h-16 flex items-center justify-center rounded-xl border-2 shadow-sm transition-all group-hover:shadow-md ${colorClasses[color]}`}>
           <i className={`fas ${icon} text-3xl`}></i>
         </div>
-        <span className="mt-3 text-[11px] font-bold text-slate-600 text-center max-w-[140px] leading-tight group-hover:text-red-700 uppercase tracking-tighter">
+        <span className="mt-3 text-[11px] font-bold text-slate-600 text-center max-w-35 leading-tight group-hover:text-red-700 uppercase tracking-tighter">
           {label}
         </span>
       </div>
@@ -47,19 +47,19 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
           <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Supplier Workflow</div>
           <div className="flex items-center justify-center gap-8">
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-dolly" label="Receive Inventory" color="green" onClick={() => onNavigate('inventory')} />
             </div>
             <div className="flex items-center justify-center text-slate-300">
               <Arrow />
             </div>
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-file-invoice" label="Enter Purchases" color="maroon" onClick={() => onNavigate('bills')} />
             </div>
             <div className="flex items-center justify-center text-slate-300">
               <Arrow />
             </div>
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-credit-card" label="Pay Bills" color="maroon" onClick={() => onNavigate('vendors')} />
             </div>
           </div>
@@ -69,19 +69,19 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
           <div className="absolute -top-3 left-8 bg-[#7d2b3f] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Customer Workflow</div>
           <div className="flex items-center justify-center gap-8">
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-file-invoice-dollar" label="Create Sales" color="maroon" onClick={() => onNavigate('invoices')} />
             </div>
             <div className="flex items-center justify-center text-slate-300">
               <Arrow />
             </div>
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-hand-holding-dollar" label="Receive Payments" color="green" onClick={() => onNavigate('customers')} />
             </div>
             <div className="flex items-center justify-center text-slate-300">
               <Arrow />
             </div>
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-building-columns" label="Record Deposits" color="maroon" onClick={() => onNavigate('deposits')} />
             </div>
           </div>
@@ -91,13 +91,13 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
         <div className="bg-white rounded-xl border border-slate-300 p-8 relative shadow-sm">
           <div className="absolute -top-3 left-8 bg-[#5a6b85] px-4 py-1 text-[10px] font-black text-white rounded-full uppercase shadow-md tracking-widest">Inventory Management</div>
           <div className="flex items-center justify-center gap-8">
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-boxes-stacked" label="Inventory Center" color="maroon" onClick={() => onNavigate('inventory')} />
             </div>
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-chart-pie" label="Reports" color="maroon" onClick={() => onNavigate('reports')} />
             </div>
-            <div className="w-36 flex-shrink-0 flex justify-center">
+            <div className="w-36 shrink-0 flex justify-center">
               <FlowIcon icon="fa-calendar-check" label="Item Master" color="maroon" onClick={() => onNavigate('itemMaster')} />
             </div>
           </div>
