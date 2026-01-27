@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { vendorsAPI, customersAPI, invoicesAPI, billsAPI, inventoryAPI, emitToast } from '../api';
 
 const parseCsv = (text: string) => {
@@ -12,6 +12,28 @@ const parseCsv = (text: string) => {
     return obj;
   });
   return { headers, rows };
+};
+
+const FileDropArea: React.FC<{onFile: (f?: File) => void, accept?: string}> = ({ onFile, accept = '.csv' }) => {
+  const ref = useRef<HTMLInputElement | null>(null);
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length) onFile(e.dataTransfer.files[0]);
+  };
+  return (
+    <div>
+      <input ref={ref} type="file" accept={accept} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      <div
+        onClick={() => ref.current?.click()}
+        onDrop={onDrop}
+        onDragOver={(e) => e.preventDefault()}
+        className="w-full border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#7d2b3f] transition-all bg-white/50"
+      >
+        <div className="text-sm text-slate-500">Click or drag & drop a CSV file here</div>
+        <div className="text-[11px] text-slate-400">Header row required · UTF-8</div>
+      </div>
+    </div>
+  );
 };
 
 const SuppliersImport: React.FC<{onImported?: () => void, downloadSample?: () => void}> = ({ onImported, downloadSample }) => {
@@ -72,13 +94,13 @@ const SuppliersImport: React.FC<{onImported?: () => void, downloadSample?: () =>
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold mb-4">Import Suppliers</h3>
+        <h3 className="text-lg font-black mb-4 uppercase tracking-wider text-slate-700">Import Suppliers</h3>
         <div className="space-x-2">
-          <button onClick={downloadSample} className="px-2 py-1 border rounded text-sm">Download sample</button>
+          <button onClick={downloadSample} className="px-3 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Download sample</button>
         </div>
       </div>
-      <div className="mb-2 text-sm text-slate-600">Select a CSV file (UTF-8). Header row required.</div>
-      <input type="file" accept=".csv" onChange={(e) => onFile(e.target.files?.[0])} />
+      <div className="mb-3 text-sm text-slate-600">Upload suppliers CSV to bulk create supplier records.</div>
+      <FileDropArea onFile={onFile} />
       {preview.length > 0 && (
         <div className="mt-4">
           <div className="mb-2 text-sm text-slate-600">Preview ({preview.length} rows)</div>
@@ -99,7 +121,7 @@ const SuppliersImport: React.FC<{onImported?: () => void, downloadSample?: () =>
             </table>
           </div>
           <div className="mt-3 flex items-center space-x-3">
-            <button onClick={() => doImport()} disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded">
+            <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' suppliers?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
               {loading ? 'Importing...' : 'Import Suppliers'}
             </button>
             {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
@@ -168,13 +190,13 @@ const CustomersImport: React.FC<{onImported?: () => void, downloadSample?: () =>
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold mb-4">Import Customers</h3>
+        <h3 className="text-lg font-black mb-4 uppercase tracking-wider text-slate-700">Import Customers</h3>
         <div>
-          <button onClick={downloadSample} className="px-2 py-1 border rounded text-sm">Download sample</button>
+          <button onClick={downloadSample} className="px-3 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Download sample</button>
         </div>
       </div>
-      <div className="mb-2 text-sm text-slate-600">Select a CSV file (UTF-8). Header row required.</div>
-      <input type="file" accept=".csv" onChange={(e) => onFile(e.target.files?.[0])} />
+      <div className="mb-3 text-sm text-slate-600">Upload customers CSV to bulk create customer records.</div>
+      <FileDropArea onFile={onFile} />
       {preview.length > 0 && (
         <div className="mt-4">
           <div className="mb-2 text-sm text-slate-600">Preview ({preview.length} rows)</div>
@@ -195,7 +217,7 @@ const CustomersImport: React.FC<{onImported?: () => void, downloadSample?: () =>
             </table>
           </div>
           <div className="mt-3 flex items-center space-x-3">
-            <button onClick={() => doImport()} disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded">
+            <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' customers?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
               {loading ? 'Importing...' : 'Import Customers'}
             </button>
             {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
@@ -290,13 +312,13 @@ const InvoicesImport: React.FC<{vendorsMap: Record<string,string>, customersMap:
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold mb-4">Import Invoices</h3>
+        <h3 className="text-lg font-black mb-4 uppercase tracking-wider text-slate-700">Import Invoices</h3>
         <div>
-          <button onClick={downloadSample} className="px-2 py-1 border rounded text-sm">Download sample</button>
+          <button onClick={downloadSample} className="px-3 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Download sample</button>
         </div>
       </div>
-      <div className="mb-2 text-sm text-slate-600">Select a CSV file (UTF-8). `items` may be JSON or `id|meters|price;...`</div>
-      <input type="file" accept=".csv" onChange={(e) => onFile(e.target.files?.[0])} />
+      <div className="mb-3 text-sm text-slate-600">Upload invoices CSV. `items` may be JSON or `id|meters|price;...`</div>
+      <FileDropArea onFile={onFile} />
       {preview.length > 0 && (
         <div className="mt-4">
           <div className="mb-2 text-sm text-slate-600">Preview ({preview.length} rows)</div>
@@ -317,7 +339,7 @@ const InvoicesImport: React.FC<{vendorsMap: Record<string,string>, customersMap:
             </table>
           </div>
           <div className="mt-3 flex items-center space-x-3">
-            <button onClick={() => doImport()} disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded">
+            <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' invoices?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
               {loading ? 'Importing...' : 'Import Invoices'}
             </button>
             {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
@@ -395,13 +417,13 @@ const BillsImport: React.FC<{vendorsMap: Record<string,string>, onImported?: () 
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold mb-4">Import Bills</h3>
+        <h3 className="text-lg font-black mb-4 uppercase tracking-wider text-slate-700">Import Bills</h3>
         <div>
-          <button onClick={downloadSample} className="px-2 py-1 border rounded text-sm">Download sample</button>
+          <button onClick={downloadSample} className="px-3 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Download sample</button>
         </div>
       </div>
-      <div className="mb-2 text-sm text-slate-600">Select a CSV file (UTF-8). `items` may be JSON or `id|meters|price;...`</div>
-      <input type="file" accept=".csv" onChange={(e) => onFile(e.target.files?.[0])} />
+      <div className="mb-3 text-sm text-slate-600">Upload bills CSV. `items` may be JSON or `id|meters|price;...`</div>
+      <FileDropArea onFile={onFile} />
       {preview.length > 0 && (
         <div className="mt-4">
           <div className="mb-2 text-sm text-slate-600">Preview ({preview.length} rows)</div>
@@ -422,7 +444,7 @@ const BillsImport: React.FC<{vendorsMap: Record<string,string>, onImported?: () 
             </table>
           </div>
           <div className="mt-3 flex items-center space-x-3">
-            <button onClick={() => doImport()} disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded">
+            <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' bills?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
               {loading ? 'Importing...' : 'Import Bills'}
             </button>
             {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
@@ -498,13 +520,13 @@ const InventoryImport: React.FC<{vendorsMap: Record<string,string>, onImported?:
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold mb-4">Import Inventory</h3>
+        <h3 className="text-lg font-black mb-4 uppercase tracking-wider text-slate-700">Import Inventory</h3>
         <div>
-          <button onClick={downloadSample} className="px-2 py-1 border rounded text-sm">Download sample</button>
+          <button onClick={downloadSample} className="px-3 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Download sample</button>
         </div>
       </div>
-      <div className="mb-2 text-sm text-slate-600">Select a CSV file (UTF-8). Header row required.</div>
-      <input type="file" accept=".csv" onChange={(e) => onFile(e.target.files?.[0])} />
+      <div className="mb-3 text-sm text-slate-600">Upload inventory CSV to bulk add inventory lots.</div>
+      <FileDropArea onFile={onFile} />
       {preview.length > 0 && (
         <div className="mt-4">
           <div className="mb-2 text-sm text-slate-600">Preview ({preview.length} rows)</div>
@@ -525,7 +547,7 @@ const InventoryImport: React.FC<{vendorsMap: Record<string,string>, onImported?:
             </table>
           </div>
           <div className="mt-3 flex items-center space-x-3">
-            <button onClick={() => doImport()} disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded">
+            <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' inventory rows?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
               {loading ? 'Importing...' : 'Import Inventory'}
             </button>
             {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
@@ -602,14 +624,14 @@ const Imports: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
-        <button onClick={() => setKey('suppliers')} className={`px-3 py-1 rounded ${key === 'suppliers' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}>Suppliers</button>
-        <button onClick={() => setKey('customers')} className={`px-3 py-1 rounded ${key === 'customers' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}>Customers</button>
-        <button onClick={() => setKey('invoices')} className={`px-3 py-1 rounded ${key === 'invoices' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}>Invoices</button>
-        <button onClick={() => setKey('bills')} className={`px-3 py-1 rounded ${key === 'bills' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}>Bills</button>
-        <button onClick={() => setKey('inventory')} className={`px-3 py-1 rounded ${key === 'inventory' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}>Inventory</button>
-        <div className="ml-4">
+        <button onClick={() => setKey('suppliers')} className={`px-3 py-1 rounded ${key === 'suppliers' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Suppliers</button>
+        <button onClick={() => setKey('customers')} className={`px-3 py-1 rounded ${key === 'customers' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Customers</button>
+        <button onClick={() => setKey('invoices')} className={`px-3 py-1 rounded ${key === 'invoices' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Invoices</button>
+        <button onClick={() => setKey('bills')} className={`px-3 py-1 rounded ${key === 'bills' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Bills</button>
+        <button onClick={() => setKey('inventory')} className={`px-3 py-1 rounded ${key === 'inventory' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Inventory</button>
+        {/* <div className="ml-4">
           <button onClick={() => downloadSample(key)} className="px-3 py-1 rounded border text-sm">Download sample CSV</button>
-        </div>
+        </div> */}
       </div>
 
       {key === 'suppliers' && <SuppliersImport downloadSample={() => downloadSample('suppliers')} onImported={() => emitToast('Suppliers import complete', 'success')} />}
