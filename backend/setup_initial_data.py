@@ -69,18 +69,20 @@ def setup_initial_data():
             Customer.objects.create(**customer_data)
         print(f"✓ Created {len(customers_data)} sample customers")
     
-    # Create sample item master entries
+    # Create sample item master entries (Fabric Types)
     if ItemMaster.objects.count() == 0:
         items_data = [
-            {'code': 'CT001', 'name': 'Cotton Twill', 'category': 'Cotton', 'standard_price': 15.00},
-            {'code': 'PL001', 'name': 'Polyester', 'category': 'Synthetic', 'standard_price': 12.00},
-            {'code': 'SL001', 'name': 'Silk Satin', 'category': 'Silk', 'standard_price': 45.00},
-            {'code': 'DN001', 'name': 'Denim', 'category': 'Cotton', 'standard_price': 20.00},
-            {'code': 'LN001', 'name': 'Linen', 'category': 'Natural', 'standard_price': 25.00},
+            {'code': 'CT001', 'name': 'Cotton Twill', 'category': 'Cotton', 'standard_price': 120.00, 'description': 'Durable cotton twill fabric'},
+            {'code': 'DN001', 'name': 'Denim Heavy', 'category': 'Cotton', 'standard_price': 350.00, 'description': 'Heavy-weight denim fabric'},
+            {'code': 'SL001', 'name': 'Silk Smooth', 'category': 'Silk', 'standard_price': 850.00, 'description': 'Premium smooth silk fabric'},
+            {'code': 'LN001', 'name': 'Linen Blend', 'category': 'Natural', 'standard_price': 250.00, 'description': 'Natural linen blend'},
+            {'code': 'PL001', 'name': 'Polyester Mesh', 'category': 'Synthetic', 'standard_price': 180.00, 'description': 'Breathable polyester mesh'},
+            {'code': 'VL001', 'name': 'Velvet Soft', 'category': 'Luxury', 'standard_price': 650.00, 'description': 'Soft velvet fabric'},
+            {'code': 'WL001', 'name': 'Wool Warm', 'category': 'Wool', 'standard_price': 480.00, 'description': 'Warm wool fabric'},
         ]
         for item_data in items_data:
             ItemMaster.objects.create(**item_data)
-        print(f"✓ Created {len(items_data)} sample item master entries")
+        print(f"✓ Created {len(items_data)} fabric types in item master")
     
     print("\nInitial setup completed successfully!")
     print("\nYou can now login with:")

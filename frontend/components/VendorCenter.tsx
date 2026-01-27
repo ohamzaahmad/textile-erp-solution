@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Vendor, Bill, PaymentRecord, Transaction } from '../types';
 import { emitToast } from '../api';
+import PrintPreview from './PrintPreview';
 
 interface VendorCenterProps {
   vendors: Vendor[];
@@ -22,6 +23,7 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
   const [isCreatingVendor, setIsCreatingVendor] = useState(false);
   const [isEditingVendor, setIsEditingVendor] = useState(false);
   const [editVendorData, setEditVendorData] = useState<any>(null);
+  const [printingBill, setPrintingBill] = useState<Bill | null>(null);
   
   const [newVendorData, setNewVendorData] = useState({ 
     name: '', 
@@ -120,8 +122,17 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
     if (updated) setSelectedVendorId(String(updated.id));
   };
 
+  const handlePrint = (bill: Bill) => {
+    setPrintingBill(bill);
+  };
+
   return (
     <div className="flex h-full bg-[#f0f3f6] rounded border border-[#a3b6cc] overflow-hidden shadow-2xl">
+      {/* Print Preview Modal */}
+      {printingBill && (
+        <PrintPreview doc={printingBill} type="Purchase" vendors={vendors} onClose={() => setPrintingBill(null)} />
+      )}
+
       {/* New Vendor Modal */}
       {isCreatingVendor && (
         <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -301,18 +312,44 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                       <tr className="text-slate-400 border-b border-[#e1e8ef] uppercase font-black text-[10px]">
                         <th className="pb-4">Purchase Date</th>
                         <th className="pb-4">Doc #</th>
+                        <th className="pb-4 text-center">Remaining Days</th>
                         <th className="pb-4 text-right">Total Amount</th>
                         <th className="pb-4 text-right">Settled</th>
                         <th className="pb-4 text-right">Open Balance</th>
                         <th className="pb-4 text-center">Status</th>
-                        <th className="pb-4 text-right">Actions</th>
+                        <th className="pb-4 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {vendorBills.map(bill => (
-                        <tr key={bill.id} className="hover:bg-slate-50 transition-colors">
+                      {vendorBills.map(bill => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dueDate = bill.dueDate ? new Date(bill.dueDate) : null;
+                        const daysRemaining = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+                        const isOverdue = bill.status !== 'Paid' && daysRemaining !== null && daysRemaining < 0;
+                        return (
+                        <tr key={bill.id} className={`hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}>
                           <td className="py-4 text-slate-600 font-bold">{bill.date ? new Date(bill.date).toLocaleDateString() : ''}</td>
-                          <td className="py-4 font-mono text-[10px] text-blue-600">{bill.id}</td>
+                          <td className="py-4 font-mono text-[10px] text-blue-600">
+                            {isOverdue && <i className="fas fa-exclamation-triangle text-red-600 mr-2" title="Overdue"></i>}
+                            {bill.id}
+                          </td>
+                          <td className="py-4 text-center">
+                            {bill.status === 'Paid' ? (
+                              <span className="text-green-600 font-black text-xs uppercase">Paid</span>
+                            ) : daysRemaining !== null ? (
+                              <div className="flex items-center justify-center space-x-2">
+                                <span className={`text-2xl font-black ${isOverdue ? 'text-red-600' : daysRemaining <= 7 ? 'text-orange-600' : 'text-green-600'}`}>
+                                  {Math.abs(daysRemaining)}
+                                </span>
+                                <span className="text-[10px] font-black uppercase text-slate-400">
+                                  {isOverdue ? 'Days Overdue' : 'Days Left'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-xs">N/A</span>
+                            )}
+                          </td>
                           <td className="py-4 text-right text-slate-500 font-bold">Rs. {bill.total.toLocaleString()}</td>
                           <td className="py-4 text-right text-green-600 font-bold">Rs. {bill.amountPaid.toLocaleString()}</td>
                           <td className="py-4 text-right font-black text-red-600">Rs. {(bill.total - bill.amountPaid).toLocaleString()}</td>
@@ -321,15 +358,20 @@ const VendorCenter: React.FC<VendorCenterProps> = ({ vendors, bills, onPayBill, 
                                {bill.status}
                              </span>
                           </td>
-                          <td className="py-4 text-right">
-                             {bill.status !== 'Paid' && (
-                               <button onClick={() => handleOpenPay(bill)} className="bg-[#7d2b3f] text-white px-4 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest shadow-sm">Settle</button>
-                             )}
+                          <td className="py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              {bill.status !== 'Paid' && (
+                                <button onClick={() => handleOpenPay(bill)} className="bg-[#7d2b3f] text-white px-4 py-1.5 rounded-sm text-[9px] font-black uppercase tracking-widest shadow-sm">Settle</button>
+                              )}
+                              <button onClick={() => handlePrint(bill)} className="text-slate-400 hover:text-[#7d2b3f] transition-colors text-lg" title="Print">
+                                <i className="fas fa-print"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      );})}
                       {vendorBills.length === 0 && (
-                        <tr><td colSpan={7} className="py-20 text-center text-slate-300 italic">No purchases found.</td></tr>
+                        <tr><td colSpan={8} className="py-20 text-center text-slate-300 italic">No purchases found.</td></tr>
                       )}
                     </tbody>
                   </table>

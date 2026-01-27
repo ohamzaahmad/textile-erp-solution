@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Customer, Invoice, PaymentRecord, Transaction } from '../types';
 import { emitToast } from '../api';
+import PrintPreview from './PrintPreview';
 
 interface CustomerCenterProps {
   customers: Customer[];
@@ -22,6 +23,7 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
   const [editCustomerData, setEditCustomerData] = useState<any>(null);
+  const [printingInvoice, setPrintingInvoice] = useState<Invoice | null>(null);
   
   const [newCustomerData, setNewCustomerData] = useState({ 
     name: '', 
@@ -116,8 +118,17 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
     if (updated) setSelectedCustomerId(String(updated.id));
   };
 
+  const handlePrint = (invoice: Invoice) => {
+    setPrintingInvoice(invoice);
+  };
+
   return (
     <div className="flex h-full bg-[#f0f3f6] rounded border border-[#a3b6cc] overflow-hidden shadow-2xl">
+      {/* Print Preview Modal */}
+      {printingInvoice && (
+        <PrintPreview doc={printingInvoice} type="Sale" customers={customers} onClose={() => setPrintingInvoice(null)} />
+      )}
+
       {/* Modals */}
       {isCreatingCustomer && (
         <div className="fixed inset-0 bg-black/60 z-60 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
@@ -260,18 +271,44 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                       <tr className="text-slate-400 border-b border-[#e1e8ef] uppercase font-black text-[10px]">
                         <th className="pb-4">Date</th>
                         <th className="pb-4">Doc #</th>
+                        <th className="pb-4 text-center">Remaining Days</th>
                         <th className="pb-4 text-right">Sale Total</th>
                         <th className="pb-4 text-right">Collected</th>
                         <th className="pb-4 text-right">Outstanding</th>
                         <th className="pb-4 text-center">Status</th>
-                        <th className="pb-4 text-right">Action</th>
+                        <th className="pb-4 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                      {customerInvoices.map(inv => (
-                        <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
+                      {customerInvoices.map(inv => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
+                        const daysRemaining = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null;
+                        const isOverdue = inv.status !== 'Paid' && daysRemaining !== null && daysRemaining < 0;
+                        return (
+                        <tr key={inv.id} className={`hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50' : ''}`}>
                           <td className="py-4 text-slate-600 font-bold">{inv.date ? new Date(inv.date).toLocaleDateString() : ''}</td>
-                          <td className="py-4 font-mono text-[10px] text-green-600">{inv.id}</td>
+                          <td className="py-4 font-mono text-[10px] text-green-600">
+                            {isOverdue && <i className="fas fa-exclamation-triangle text-red-600 mr-2" title="Overdue"></i>}
+                            {inv.id}
+                          </td>
+                          <td className="py-4 text-center">
+                            {inv.status === 'Paid' ? (
+                              <span className="text-green-600 font-black text-xs uppercase">Paid</span>
+                            ) : daysRemaining !== null ? (
+                              <div className="flex items-center justify-center space-x-2">
+                                <span className={`text-2xl font-black ${isOverdue ? 'text-red-600' : daysRemaining <= 7 ? 'text-orange-600' : 'text-green-600'}`}>
+                                  {Math.abs(daysRemaining)}
+                                </span>
+                                <span className="text-[10px] font-black uppercase text-slate-400">
+                                  {isOverdue ? 'Days Overdue' : 'Days Left'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-xs">N/A</span>
+                            )}
+                          </td>
                           <td className="py-4 text-right text-slate-500 font-bold">Rs. {inv.total.toLocaleString()}</td>
                           <td className="py-4 text-right text-green-600 font-bold">Rs. {inv.amountPaid.toLocaleString()}</td>
                           <td className="py-4 text-right font-black text-red-700">Rs. {(inv.total - inv.amountPaid).toLocaleString()}</td>
@@ -280,15 +317,20 @@ const CustomerCenter: React.FC<CustomerCenterProps> = ({ customers, invoices, on
                                {inv.status}
                              </span>
                           </td>
-                          <td className="py-4 text-right">
-                             {inv.status !== 'Paid' && (
-                               <button onClick={() => handleOpenPayment(inv)} className="bg-green-600 text-white px-5 py-2 rounded-sm text-[10px] font-bold uppercase tracking-tight shadow-md hover:bg-green-700 active:scale-95 transition-all">Receive</button>
-                             )}
+                          <td className="py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              {inv.status !== 'Paid' && (
+                                <button onClick={() => handleOpenPayment(inv)} className="bg-green-600 text-white px-5 py-2 rounded-sm text-[10px] font-bold uppercase tracking-tight shadow-md hover:bg-green-700 active:scale-95 transition-all">Receive</button>
+                              )}
+                              <button onClick={() => handlePrint(inv)} className="text-slate-400 hover:text-green-600 transition-colors text-lg" title="Print">
+                                <i className="fas fa-print"></i>
+                              </button>
+                            </div>
                           </td>
                         </tr>
-                      ))}
+                      );})}
                       {customerInvoices.length === 0 && (
-                        <tr><td colSpan={7} className="py-24 text-center text-slate-300 italic">No transactions found for this customer</td></tr>
+                        <tr><td colSpan={8} className="py-24 text-center text-slate-300 italic">No transactions found for this customer</td></tr>
                       )}
                     </tbody>
                   </table>

@@ -28,30 +28,37 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
   const [fabrics, setFabrics] = useState<TempFabric[]>([]);
   
   // Current Fabric Input State
-  const [fabricTypes, setFabricTypes] = useState<string[]>(['Cotton Twill', 'Denim Heavy', 'Silk Smooth', 'Linen Blend', 'Polyester Mesh', 'Velvet Soft', 'Wool Warm']);
+  const [fabricTypes, setFabricTypes] = useState<string[]>([]);
+  const [fabricTypesLoading, setFabricTypesLoading] = useState(true);
+  const [isManagingFabricTypes, setIsManagingFabricTypes] = useState(false);
+  const [newFabricTypeName, setNewFabricTypeName] = useState('');
   const [currentFabric, setCurrentFabric] = useState<Omit<TempFabric, 'id'>>({
-    type: fabricTypes[0] || 'Cotton Twill',
+    type: '',
     meters: 0,
     unitPrice: 0
   });
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const items = await itemMasterAPI.getAll();
-        if (!mounted || !Array.isArray(items)) return;
+  const loadFabricTypes = async () => {
+    setFabricTypesLoading(true);
+    try {
+      const items = await itemMasterAPI.getAll();
+      if (Array.isArray(items)) {
         const names = items.filter((it: any) => it.is_active).map((it: any) => it.name);
-        if (names.length) {
-          setFabricTypes(names);
+        setFabricTypes(names);
+        if (names.length > 0 && !currentFabric.type) {
           setCurrentFabric(prev => ({ ...prev, type: names[0] }));
         }
-      } catch (e) {
-        // failed to load item master, keep defaults
       }
-    };
-    load();
-    return () => { mounted = false; };
+    } catch (e) {
+      console.error('Failed to load fabric types:', e);
+      alert('Failed to load fabric types. Please check your connection.');
+    } finally {
+      setFabricTypesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFabricTypes();
   }, []);
 
   const handleAddFabricToLot = () => {
@@ -96,7 +103,52 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
   const resetForm = () => {
     setLotNumber('');
     setFabrics([]);
-    setCurrentFabric({ type: 'Cotton Twill', meters: 0, unitPrice: 0 });
+    setCurrentFabric({ type: fabricTypes[0] || '', meters: 0, unitPrice: 0 });
+  };
+
+  const handleAddFabricType = async () => {
+    if (!newFabricTypeName.trim()) {
+      alert('Please enter a fabric type name');
+      return;
+    }
+    if (fabricTypes.includes(newFabricTypeName.trim())) {
+      alert('This fabric type already exists');
+      return;
+    }
+    try {
+      const data = {
+        code: `FAB-${Date.now()}`,
+        name: newFabricTypeName.trim(),
+        category: 'Fabric',
+        unit_of_measure: 'Meters',
+        is_active: true
+      };
+      await itemMasterAPI.create(data);
+      setNewFabricTypeName('');
+      await loadFabricTypes();
+      alert('Fabric type added successfully!');
+    } catch (e) {
+      console.error('Failed to add fabric type:', e);
+      alert('Failed to add fabric type. Please try again.');
+    }
+  };
+
+  const handleDeleteFabricType = async (fabricName: string) => {
+    if (!confirm(`Are you sure you want to delete "${fabricName}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      const items = await itemMasterAPI.getAll();
+      const itemToDelete = items.find((it: any) => it.name === fabricName);
+      if (itemToDelete) {
+        await itemMasterAPI.delete(itemToDelete.id);
+        await loadFabricTypes();
+        alert('Fabric type deleted successfully!');
+      }
+    } catch (e) {
+      console.error('Failed to delete fabric type:', e);
+      alert('Failed to delete fabric type. Please try again.');
+    }
   };
 
   const groupedInventory = useMemo(() => {
@@ -113,8 +165,6 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
 
     return groups;
   }, [inventory, searchTerm]);
-
-  const FABRIC_TYPES = fabricTypes;
 
   return (
     <div className="bg-white rounded border border-slate-300 shadow-xl flex flex-col h-full overflow-hidden">
@@ -142,6 +192,13 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
              <i className="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs transition-colors group-focus-within:text-blue-500"></i>
           </div>
           <button 
+            onClick={() => setIsManagingFabricTypes(true)}
+            className="bg-[#7d2b3f] text-white px-4 py-2 rounded text-xs font-black hover:bg-[#5a1f2d] transition-all shadow-lg flex items-center"
+            title="Manage Fabric Types"
+          >
+            <i className="fas fa-tags mr-2"></i> Fabric Types
+          </button>
+          <button 
             onClick={() => setIsReceiving(true)}
             className="bg-green-600 text-white px-5 py-2 rounded text-xs font-black hover:bg-green-700 transition-all shadow-lg flex items-center transform active:scale-95"
           >
@@ -149,6 +206,110 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
           </button>
         </div>
       </div>
+
+      {/* Fabric Type Management Modal */}
+      {isManagingFabricTypes && (
+        <div className="fixed inset-0 bg-black/70 z-70 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border-t-4 border-[#7d2b3f]">
+            <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <i className="fas fa-tags text-[#7d2b3f]"></i>
+                <span className="font-black text-sm text-slate-700 uppercase tracking-widest">Manage Fabric Types</span>
+              </div>
+              <button onClick={() => setIsManagingFabricTypes(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                <i className="fas fa-times text-lg"></i>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Add New Fabric Type */}
+              <div className="bg-green-50 border-2 border-green-200 p-4 rounded-lg">
+                <label className="block text-[10px] font-black text-green-700 uppercase mb-2">
+                  <i className="fas fa-plus-circle mr-1"></i> Add New Fabric Type
+                </label>
+                <div className="flex space-x-2">
+                  <input 
+                    type="text" 
+                    value={newFabricTypeName}
+                    onChange={e => setNewFabricTypeName(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleAddFabricType()}
+                    className="flex-1 border border-green-300 rounded p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                    placeholder="e.g., Cotton Twill, Silk Blend, etc."
+                  />
+                  <button 
+                    onClick={handleAddFabricType}
+                    className="bg-green-600 text-white px-6 py-2 rounded text-xs font-black hover:bg-green-700 transition-all shadow-lg"
+                  >
+                    <i className="fas fa-plus mr-1"></i> Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Existing Fabric Types List */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2">
+                  <i className="fas fa-list mr-1"></i> Current Fabric Types ({fabricTypes.length})
+                </label>
+                <div className="border border-slate-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+                  {fabricTypesLoading ? (
+                    <div className="p-8 text-center text-slate-400">
+                      <i className="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                      <p className="text-xs">Loading fabric types...</p>
+                    </div>
+                  ) : fabricTypes.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400">
+                      <i className="fas fa-inbox text-3xl mb-2"></i>
+                      <p className="text-xs italic">No fabric types defined yet. Add one above to get started.</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 text-slate-500 sticky top-0">
+                        <tr>
+                          <th className="p-3 font-black uppercase">#</th>
+                          <th className="p-3 font-black uppercase">Fabric Type Name</th>
+                          <th className="p-3 text-center font-black uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {fabricTypes.map((type, index) => (
+                          <tr key={type} className="hover:bg-slate-50">
+                            <td className="p-3 text-slate-400 font-mono">{index + 1}</td>
+                            <td className="p-3 font-bold text-slate-700">{type}</td>
+                            <td className="p-3 text-center">
+                              <button 
+                                onClick={() => handleDeleteFabricType(type)}
+                                className="text-red-400 hover:text-red-600 transition-colors px-3 py-1 rounded hover:bg-red-50"
+                                title="Delete this fabric type"
+                              >
+                                <i className="fas fa-trash"></i> Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* Info Message */}
+              <div className="bg-blue-50 border border-blue-200 p-3 rounded text-xs text-blue-700">
+                <i className="fas fa-info-circle mr-2"></i>
+                <strong>Note:</strong> Fabric types are used throughout the system when receiving inventory and creating invoices/bills.
+              </div>
+
+              <div className="pt-4 flex justify-end border-t border-slate-200">
+                <button 
+                  onClick={() => setIsManagingFabricTypes(false)}
+                  className="px-8 py-2 text-xs font-black bg-slate-600 text-white rounded hover:bg-slate-700 transition-all uppercase tracking-widest"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Receive Multi-Fabric Lot Modal */}
       {isReceiving && (
@@ -198,8 +359,15 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                       value={currentFabric.type}
                       onChange={e => setCurrentFabric({...currentFabric, type: e.target.value})}
                       className="w-full border border-slate-300 rounded p-2 text-xs"
+                      disabled={fabricTypesLoading || fabricTypes.length === 0}
                     >
-                      {FABRIC_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      {fabricTypesLoading ? (
+                        <option>Loading...</option>
+                      ) : fabricTypes.length === 0 ? (
+                        <option>No fabric types available - Please add one first</option>
+                      ) : (
+                        fabricTypes.map(t => <option key={t} value={t}>{t}</option>)
+                      )}
                     </select>
                   </div>
                   <div>
