@@ -683,7 +683,7 @@ const App: React.FC = () => {
           {/* Centered brand so it's visible across viewports */}
           <div className="absolute inset-x-0 flex justify-center pointer-events-none">
             <div className="pointer-events-auto flex items-center text-[#7d2b3f] font-black text-sm uppercase tracking-widest">
-              <i className="fas fa-leaf mr-2"></i>
+              <img src="/logo.svg" alt="HA Fabrics logo" className="w-6 h-6 mr-2 object-contain" />
               <span>HA FABRICS</span>
             </div>
           </div>

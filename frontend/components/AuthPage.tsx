@@ -46,8 +46,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
              
-             <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-inner border border-white/20 backdrop-blur-sm">
-                <i className="fas fa-leaf text-4xl"></i>
+             <div className="w-20 h-20 bg-white rounded-2xl p-2 flex items-center justify-center mx-auto mb-6 shadow-inner border border-white/20">
+               <img src="/logo.svg" alt="HA Fabrics logo" className="w-full h-full object-contain" />
              </div>
              <h1 className="text-3xl font-black text-white tracking-tighter uppercase mb-1">HA FABRICS</h1>
              <p className="text-red-100 text-[10px] font-black uppercase tracking-[4px]">Enterprise ERP v2.0</p>
