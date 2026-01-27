@@ -1,52 +1,261 @@
-# HA FABRICS — Local Network (LAN) Quick Setup
+# HA FABRICS ERP — System Requirements & Installation Guide
 
-This guide shows a fast, pragmatic way to run the application on one Windows laptop as a server and use other laptops as clients on the same office network.
+Complete setup guide for installing the Textile ERP system on any Windows machine.
 
-Goal: single laptop acts as server (backend + frontend) accessible on your office LAN. Clients open the app in a browser using the server IP.
+---
 
-Prerequisites (server laptop)
-- Windows 10/11 (or Windows Server)
-- Python 3.10+ (available on PATH)
-- Node.js 16+ (for frontend build / dev)
-- Git (optional)
-- The repository cloned to `D:\textile-erp-solution` (adjust paths if different)
+## **System Requirements**
 
-Overview
-- Backend: Django app served on `0.0.0.0:8000` (dev) or behind a proper server for production.
-- Frontend: Vite dev server (hot reload) or build + static server (recommended for office usage).
-- Open Windows Firewall ports for the chosen services.
+### **Required Software**
+1. **Python 3.8+** (Backend)
+2. **Node.js 16+** and npm (Frontend)
+3. **PostgreSQL 12+** (Database)
 
-1) Prepare the repository and Python environment (server laptop)
+### **Optional**
+- Git (for cloning the repository)
 
-Open PowerShell in the repository root and run:
+---
+
+## **Installation Steps**
+
+### **1. Database Setup**
+
+Install PostgreSQL, then create the database:
 
 ```powershell
-cd D:\textile-erp-solution\backend
-# create a virtual environment
-python -m venv .\venv
-.\venv\Scripts\Activate.ps1
+# Open PostgreSQL command line
+psql -U postgres
 
-# install backend dependencies
+# Create database and user
+CREATE DATABASE textileflow_db;
+CREATE USER textileflow_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE textileflow_db TO textileflow_user;
+\q
+```
+
+---
+
+### **2. Backend Setup**
+
+```powershell
+cd backend
+
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
+```
 
-# apply migrations and create an admin
+**Create `.env` file** in the `backend/` directory with this content:
+
+```env
+DEBUG=True
+SECRET_KEY=your-secret-key-here-change-this-in-production
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=textileflow_db
+DB_USER=textileflow_user
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+**Run migrations and setup:**
+
+```powershell
+# Apply database migrations
 python manage.py migrate
-python manage.py createsuperuser
+
+# Create initial data (users, vendors, customers, fabric types)
+python setup_initial_data.py
+
+# Start backend server
+python manage.py runserver
 ```
 
-Notes:
-- If you use a different DB (Postgres), set `DATABASES` in `textileflow/settings.py` and ensure DB is reachable.
+**Default Users Created:**
+- **Admin**: username: `admin`, password: `admin123`
+- **Manager**: username: `manager`, password: `manager123`
+- **Cashier**: username: `cashier`, password: `cashier123`
 
-2) Make the backend reachable on the LAN
+Backend will run on: **http://localhost:8000**
 
-- In `d:\textile-erp-solution\backend\textileflow\settings.py` set at minimum for development:
+---
 
-```py
-# quick dev: allow all hosts on LAN (replace with specific IPs for production)
-ALLOWED_HOSTS = ['*']
+### **3. Frontend Setup**
+
+```powershell
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-- Start Django server bound to all interfaces:
+Frontend will run on: **http://localhost:5173**
+
+**Access the application:** Open your browser and go to `http://localhost:5173`
+
+---
+
+## **Network/LAN Setup (Optional)**
+
+To access the application from other devices on your local network:
+
+### **Step 1: Find Your Server IP Address**
+```powershell
+ipconfig
+# Look for IPv4 Address (e.g., 192.168.1.100)
+```
+
+### **Step 2: Configure Backend for Network Access**
+
+Update `backend/.env` file:
+```env
+ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.100
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://192.168.1.100:5173
+```
+
+Start backend on all interfaces:
+```powershell
+python manage.py runserver 0.0.0.0:8000
+```
+
+### **Step 3: Configure Frontend for Network Access**
+
+Update `frontend/vite.config.ts`:
+```typescript
+export default defineConfig({
+  server: {
+    host: '0.0.0.0',
+    port: 5173
+  }
+})
+```
+
+Then restart frontend:
+```powershell
+npm run dev
+```
+
+### **Step 4: Configure Windows Firewall**
+
+```powershell
+# Allow backend port
+New-NetFirewallRule -DisplayName "Django Backend" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
+
+# Allow frontend port
+New-NetFirewallRule -DisplayName "Vite Frontend" -Direction Inbound -Protocol TCP -LocalPort 5173 -Action Allow
+```
+
+### **Step 5: Access from Other Devices**
+
+On other devices on the same network, open browser and go to:
+```
+http://192.168.1.100:5173
+```
+(Replace with your actual server IP address)
+
+---
+
+## **Production Build**
+
+For production deployment:
+
+### **Frontend Build**
+```powershell
+cd frontend
+npm run build
+```
+
+The built files will be in `frontend/dist/`
+
+### **Backend Static Files**
+```powershell
+cd backend
+python manage.py collectstatic
+```
+
+---
+
+## **Troubleshooting**
+
+### **Backend won't start**
+- Check if PostgreSQL is running
+- Verify database credentials in `.env` file
+- Ensure port 8000 is not in use: `netstat -ano | findstr :8000`
+
+### **Frontend can't connect to backend**
+- Check if backend is running on port 8000
+- Verify CORS settings in backend `.env` file
+- Check frontend `api.ts` has correct backend URL
+
+### **Can't access from other devices**
+- Verify firewall rules are added
+- Check if both frontend and backend are running with `0.0.0.0` binding
+- Ensure devices are on the same network
+- Try pinging the server IP from client device
+
+### **Database connection errors**
+- Verify PostgreSQL is running: `Get-Service postgresql*`
+- Check database exists: `psql -U postgres -l`
+- Verify user permissions
+
+---
+
+## **Quick Start Commands**
+
+### **Daily Startup (Development)**
+
+**Terminal 1 - Backend:**
+```powershell
+cd D:\textile-erp-solution\backend
+venv\Scripts\activate
+python manage.py runserver
+```
+
+**Terminal 2 - Frontend:**
+```powershell
+cd D:\textile-erp-solution\frontend
+npm run dev
+```
+
+### **Startup Script**
+
+Use the provided PowerShell script:
+```powershell
+.\setup\setup_startup.ps1
+```
+
+---
+
+## **Features Available**
+
+- **Inventory Management**: Track fabric lots with multiple fabric types
+- **Vendor Management**: Manage suppliers and purchase orders
+- **Customer Management**: Track customers and sales invoices
+- **Bills & Invoices**: Create and manage financial documents
+- **Expenses**: Record and track business expenses
+- **Reports**: Generate financial and inventory reports
+- **Dynamic Fabric Types**: Add/delete fabric types through the UI
+- **Print Preview**: Print invoices and bills
+- **Multi-user Support**: Admin, Manager, and Cashier roles
+
+---
+
+## **Support**
+
+For issues or questions:
+- Check the `backend/README.md` for API documentation
+- Review `backend/API_EXAMPLES.md` for API usage examples
+- Check `backend/PROJECT_STRUCTURE.md` for architecture overview
+
+---
 
 ```powershell
 # from backend folder with venv active
@@ -143,3 +352,10 @@ If you want, I can:
 
 ---
 File created by the setup helper — place any office-specific IPs/ports in the examples above.
+
+
+
+
+
+
+
