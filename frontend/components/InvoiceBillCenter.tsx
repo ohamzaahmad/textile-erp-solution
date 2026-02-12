@@ -423,7 +423,10 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                   <tbody>
                     {lineItems.map(li => (
                       <tr key={li.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td className="p-6 font-bold text-slate-700">{li.type}</td>
+                        <td className="p-6 font-bold text-slate-700">
+                          {li.lotNumber && <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded mr-2 font-black uppercase border border-slate-200">{li.lotNumber}</span>}
+                          {li.type}
+                        </td>
                         <td className="p-6 text-right font-mono text-slate-500">{li.meters.toFixed(2)}m</td>
                         <td className="p-6 text-right font-mono text-slate-500">PKR {li.price.toLocaleString()}</td>
                         <td className="p-6 text-right font-black text-slate-800">PKR {(li.meters * li.price).toLocaleString()}</td>
@@ -441,7 +444,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                           className="w-full border border-slate-200 rounded-xl p-3 bg-white text-[11px] font-bold shadow-sm"
                         >
                           <option value="">-- Add Fabric --</option>
-                          {availableInventory.map(i => <option key={i.id} value={i.id}>{i.type} ({i.meters}m avail)</option>)}
+                          {availableInventory.map(i => <option key={i.id} value={i.id}>{i.lotNumber} | {i.type} ({i.meters}m avail)</option>)}
                         </select>
                       </td>
                       <td className="p-6">

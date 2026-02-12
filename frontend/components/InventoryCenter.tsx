@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { itemMasterAPI } from '../api';
+import { itemMasterAPI, inventoryAPI, emitToast } from '../api';
 import { InventoryItem, Vendor } from '../types';
 
 interface InventoryCenterProps {
@@ -18,9 +18,14 @@ interface TempFabric {
   unitPrice: number;
 }
 
-const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, onReceive, onInitiateBill }) => {
+const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, setInventory, vendors, onReceive, onInitiateBill }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isReceiving, setIsReceiving] = useState(false);
+
+  // Inline edit state for existing inventory items
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{ type: string; meters: number; unitPrice: number; lotNumber: string }>({ type: '', meters: 0, unitPrice: 0, lotNumber: '' });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Receive Lot Form State
   const [lotNumber, setLotNumber] = useState('');
@@ -78,6 +83,10 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
     setFabrics(fabrics.filter(f => f.id !== id));
   };
 
+  const handleUpdateFabric = (id: string, field: keyof Omit<TempFabric, 'id'>, value: string | number) => {
+    setFabrics(fabrics.map(f => f.id === id ? { ...f, [field]: value } : f));
+  };
+
   const handleFinalReceive = () => {
     if (!lotNumber || !vendorId || fabrics.length === 0) {
       alert("Please provide a Lot Number and at least one fabric item");
@@ -104,6 +113,59 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
     setLotNumber('');
     setFabrics([]);
     setCurrentFabric({ type: fabricTypes[0] || '', meters: 0, unitPrice: 0 });
+  };
+
+  const handleStartEdit = (item: InventoryItem) => {
+    if (item.isBilled) {
+      emitToast('Cannot edit billed items — they are linked to a purchase/bill.', 'error');
+      return;
+    }
+    setEditingItemId(item.id);
+    setEditValues({ type: item.type, meters: item.meters, unitPrice: item.unitPrice, lotNumber: item.lotNumber });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingItemId) return;
+    if (editValues.meters <= 0 || editValues.unitPrice <= 0) {
+      emitToast('Meters and unit price must be greater than 0', 'error');
+      return;
+    }
+    if (!editValues.lotNumber.trim()) {
+      emitToast('Lot number cannot be empty', 'error');
+      return;
+    }
+    setIsSavingEdit(true);
+    try {
+      const item = inventory.find(i => i.id === editingItemId);
+      if (!item) return;
+      await inventoryAPI.update(editingItemId, {
+        lot_number: editValues.lotNumber.trim(),
+        fabric_type: editValues.type,
+        meters: editValues.meters,
+        unit_price: editValues.unitPrice,
+        vendor: parseInt(item.vendorId),
+        received_date: item.receivedDate,
+      });
+      // Update local state
+      setInventory(prev => prev.map(i => i.id === editingItemId ? {
+        ...i,
+        lotNumber: editValues.lotNumber.trim(),
+        type: editValues.type,
+        meters: editValues.meters,
+        unitPrice: editValues.unitPrice,
+      } : i));
+      emitToast('Item updated successfully', 'success');
+      setEditingItemId(null);
+    } catch (e: any) {
+      console.error('Failed to update inventory item:', e);
+      emitToast('Failed to update item: ' + (e.message || 'Unknown error'), 'error');
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const handleAddFabricType = async () => {
@@ -417,9 +479,35 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                   <tbody className="divide-y divide-slate-100">
                     {fabrics.length > 0 ? fabrics.map(f => (
                       <tr key={f.id} className="hover:bg-slate-50">
-                        <td className="p-2 font-bold">{f.type}</td>
-                        <td className="p-2 text-right">{f.meters.toFixed(2)}m</td>
-                        <td className="p-2 text-right">Rs. {f.unitPrice}</td>
+                        <td className="p-2">
+                          <select
+                            value={f.type}
+                            onChange={e => handleUpdateFabric(f.id, 'type', e.target.value)}
+                            className="w-full border border-slate-200 rounded p-1 text-xs font-bold bg-white focus:ring-1 focus:ring-[#7d2b3f] outline-none"
+                          >
+                            {fabricTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </td>
+                        <td className="p-2">
+                          <input
+                            type="number"
+                            value={f.meters}
+                            onChange={e => handleUpdateFabric(f.id, 'meters', parseFloat(e.target.value) || 0)}
+                            className="w-full border border-slate-200 rounded p-1 text-xs text-right font-bold bg-white focus:ring-1 focus:ring-[#7d2b3f] outline-none"
+                            min="0.01"
+                            step="0.01"
+                          />
+                        </td>
+                        <td className="p-2">
+                          <input
+                            type="number"
+                            value={f.unitPrice}
+                            onChange={e => handleUpdateFabric(f.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                            className="w-full border border-slate-200 rounded p-1 text-xs text-right font-bold bg-white focus:ring-1 focus:ring-[#7d2b3f] outline-none"
+                            min="0"
+                            step="0.01"
+                          />
+                        </td>
                         <td className="p-2 text-right font-black text-[#7d2b3f]">Rs. {(f.meters * f.unitPrice).toLocaleString()}</td>
                         <td className="p-2 text-center">
                           <button onClick={() => handleRemoveFabric(f.id)} className="text-red-400 hover:text-red-600"><i className="fas fa-trash"></i></button>
@@ -517,16 +605,49 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                     </td>
                   </tr>
                   {/* Fabric Item Sub-rows */}
-                  {items.map(item => (
-                    <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                  {items.map(item => {
+                    const isEditing = editingItemId === item.id;
+                    return (
+                    <tr key={item.id} className={`border-b border-slate-100 transition-colors ${isEditing ? 'bg-yellow-50 ring-1 ring-yellow-300' : 'hover:bg-slate-50/50'}`}>
                       <td className="p-3 pl-10 text-slate-400 italic border-l-4 border-slate-200 text-[10px]">
-                        #{item.id.slice(-4)}
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editValues.lotNumber}
+                            onChange={e => setEditValues({ ...editValues, lotNumber: e.target.value })}
+                            className="w-full border border-yellow-300 rounded px-1.5 py-0.5 text-[10px] font-bold text-slate-700 bg-white outline-none focus:ring-1 focus:ring-[#7d2b3f]"
+                            placeholder="Lot#"
+                          />
+                        ) : (
+                          <>#{item.id.slice(-4)}</>
+                        )}
                       </td>
                       <td className="p-3 font-bold text-slate-700">
-                        {item.type}
+                        {isEditing ? (
+                          <select
+                            value={editValues.type}
+                            onChange={e => setEditValues({ ...editValues, type: e.target.value })}
+                            className="w-full border border-yellow-300 rounded px-1.5 py-0.5 text-xs font-bold bg-white outline-none focus:ring-1 focus:ring-[#7d2b3f]"
+                          >
+                            {fabricTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        ) : (
+                          item.type
+                        )}
                       </td>
                       <td className="p-3 text-right font-mono text-slate-600">
-                        {item.meters.toFixed(2)}m
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editValues.meters}
+                            onChange={e => setEditValues({ ...editValues, meters: parseFloat(e.target.value) || 0 })}
+                            className="w-24 border border-yellow-300 rounded px-1.5 py-0.5 text-xs text-right font-bold bg-white outline-none focus:ring-1 focus:ring-[#7d2b3f]"
+                            min="0.01"
+                            step="0.01"
+                          />
+                        ) : (
+                          <>{item.meters.toFixed(2)}m</>
+                        )}
                       </td>
                       <td className="p-3 text-center">
                         <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-tighter ${item.isBilled ? 'text-green-700 bg-green-100' : 'text-slate-500 bg-slate-100'}`}>
@@ -534,13 +655,51 @@ const InventoryCenter: React.FC<InventoryCenterProps> = ({ inventory, vendors, o
                         </span>
                       </td>
                       <td className="p-3 text-right text-slate-500 text-[11px] font-medium">
-                        @ Rs. {item.unitPrice.toLocaleString()} /m
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editValues.unitPrice}
+                            onChange={e => setEditValues({ ...editValues, unitPrice: parseFloat(e.target.value) || 0 })}
+                            className="w-24 border border-yellow-300 rounded px-1.5 py-0.5 text-xs text-right font-bold bg-white outline-none focus:ring-1 focus:ring-[#7d2b3f]"
+                            min="0"
+                            step="0.01"
+                          />
+                        ) : (
+                          <>@ Rs. {item.unitPrice.toLocaleString()} /m</>
+                        )}
                       </td>
-                      <td className="p-3 text-center text-slate-400 text-[10px] italic">
-                        Part of lot
+                      <td className="p-3 text-center">
+                        {isEditing ? (
+                          <div className="flex items-center justify-center space-x-1">
+                            <button
+                              onClick={handleSaveEdit}
+                              disabled={isSavingEdit}
+                              className="bg-green-600 text-white px-2 py-1 rounded text-[9px] font-black hover:bg-green-700 transition-all disabled:opacity-50"
+                              title="Save"
+                            >
+                              {isSavingEdit ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="bg-slate-400 text-white px-2 py-1 rounded text-[9px] font-black hover:bg-slate-500 transition-all"
+                              title="Cancel"
+                            >
+                              <i className="fas fa-times"></i>
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleStartEdit(item)}
+                            className={`text-[10px] font-bold transition-colors ${item.isBilled ? 'text-slate-300 cursor-not-allowed' : 'text-blue-400 hover:text-blue-600'}`}
+                            title={item.isBilled ? 'Cannot edit billed items' : 'Edit this item'}
+                          >
+                            <i className="fas fa-pen mr-1"></i>{item.isBilled ? 'Locked' : 'Edit'}
+                          </button>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </React.Fragment>
               );
             })}
