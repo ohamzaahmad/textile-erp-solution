@@ -15,6 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, role, onLogo
   const allMenuItems = [
     { id: 'home', label: 'Home', icon: 'fa-home', roles: ['manager'] },
     { id: 'vendors', label: 'Supplier Center', icon: 'fa-truck', roles: ['manager'] },
+    { id: 'brokers', label: 'Broker Center', icon: 'fa-user-tie', roles: ['manager'] },
     { id: 'imports', label: 'Imports', icon: 'fa-file-import', roles: ['manager'] },
     { id: 'customers', label: 'Customer Center', icon: 'fa-users', roles: ['manager', 'cashier'] },
     { id: 'inventory', label: 'Inventory', icon: 'fa-boxes-stacked', roles: ['manager'] },

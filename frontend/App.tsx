@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Page, Vendor, Customer, InventoryItem, Invoice, Bill, PaymentRecord, Transaction, User, Expense } from './types';
-import { vendorsAPI, customersAPI, inventoryAPI, invoicesAPI, billsAPI, authAPI, TokenManager, emitToast } from './api';
+import { Page, Vendor, Customer, Broker, InventoryItem, Invoice, Bill, PaymentRecord, Transaction, User, Expense } from './types';
+import { vendorsAPI, customersAPI, brokersAPI, inventoryAPI, invoicesAPI, billsAPI, authAPI, TokenManager, emitToast } from './api';
 import Sidebar from './components/Sidebar';
 import FlowchartDashboard from './components/FlowchartDashboard';
 import VendorCenter from './components/VendorCenter';
+import BrokerCenter from './components/BrokerCenter';
 import CustomerCenter from './components/CustomerCenter';
 import InventoryCenter from './components/InventoryCenter';
 import InvoiceBillCenter from './components/InvoiceBillCenter';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
   });
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [brokers, setBrokers] = useState<Broker[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -70,15 +72,16 @@ const App: React.FC = () => {
   const loadAllData = async () => {
     setIsLoading(true);
     try {
-      const [vendorsData, customersData, inventoryData, invoicesData, billsData] = await Promise.all([
+      const [vendorsData, customersData, brokersData, inventoryData, invoicesData, billsData] = await Promise.all([
         vendorsAPI.getAll(),
         customersAPI.getAll(),
+        brokersAPI.getAll(),
         inventoryAPI.getAll(),
         invoicesAPI.getAll(),
         billsAPI.getAll(),
       ]);
 
-      console.log('Loaded data:', { vendorsData, customersData, inventoryData, invoicesData, billsData });
+      console.log('Loaded data:', { vendorsData, customersData, brokersData, inventoryData, invoicesData, billsData });
 
       // Map backend data to frontend format
       const mappedVendors = Array.isArray(vendorsData) ? vendorsData.map(mapVendor) : [];
@@ -109,6 +112,7 @@ const App: React.FC = () => {
       
       setVendors(vendorsWithLogs);
       setCustomers(customersWithLogs);
+      setBrokers(Array.isArray(brokersData) ? brokersData.map(mapBroker) : []);
       setInventory(Array.isArray(inventoryData) ? inventoryData.map(mapInventoryItem) : []);
       setInvoices(Array.isArray(invoicesData) ? invoicesData.map(mapInvoice) : []);
       setBills(Array.isArray(billsData) ? billsData.map(mapBill) : []);
@@ -141,6 +145,13 @@ const App: React.FC = () => {
     logs: [] // Will be loaded separately if needed
   });
 
+  const mapBroker = (data: any): Broker => ({
+    id: String(data.id),
+    name: data.name || '',
+    contact: data.contact || '',
+    address: data.address || '',
+  });
+
   const mapInventoryItem = (data: any): InventoryItem => ({
     id: String(data.id),
     lotNumber: data.lot_number || '',
@@ -155,6 +166,11 @@ const App: React.FC = () => {
   const mapInvoice = (data: any): Invoice => ({
     id: String(data.id),
     customerId: String(data.customer),
+    brokerId: data.broker ? String(data.broker) : undefined,
+    brokerName: data.broker_name || '',
+    commissionType: data.commission_type || undefined,
+    commissionValue: parseFloat(data.commission_value) || 0,
+    commissionAmount: parseFloat(data.commission_amount) || 0,
     date: data.date || '',
     dueDate: data.due_date || '',
     items: data.items?.map((item: any) => ({
@@ -285,6 +301,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
     setVendors([]);
     setCustomers([]);
+    setBrokers([]);
     setInventory([]);
     setInvoices([]);
     setBills([]);
@@ -392,6 +409,54 @@ const App: React.FC = () => {
       console.error('Error updating customer:', error);
       alert('Failed to update customer.');
       return null;
+    }
+  };
+
+  const handleAddBroker = async (broker: Broker) => {
+    try {
+      const backendData = {
+        name: broker.name,
+        contact: broker.contact,
+        address: broker.address,
+      };
+      const created = await brokersAPI.create(backendData);
+      const mapped = mapBroker(created);
+      setBrokers(prev => [...prev, mapped]);
+      return mapped;
+    } catch (error) {
+      console.error('Error adding broker:', error);
+      alert('Failed to add broker. Please try again.');
+      return null;
+    }
+  };
+
+  const handleUpdateBroker = async (broker: Broker) => {
+    try {
+      const backendData = {
+        name: broker.name,
+        contact: broker.contact,
+        address: broker.address,
+      };
+      const updated = await brokersAPI.update(String(broker.id), backendData);
+      const mapped = mapBroker(updated);
+      setBrokers(prev => prev.map(b => b.id === mapped.id ? mapped : b));
+      return mapped;
+    } catch (error) {
+      console.error('Error updating broker:', error);
+      alert('Failed to update broker. Please try again.');
+      return null;
+    }
+  };
+
+  const handleDeleteBroker = async (brokerId: string) => {
+    try {
+      await brokersAPI.delete(brokerId);
+      setBrokers(prev => prev.filter(b => b.id !== brokerId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting broker:', error);
+      alert('Failed to delete broker. It may be linked to existing invoices.');
+      return false;
     }
   };
 
@@ -533,6 +598,9 @@ const App: React.FC = () => {
       const backendData = {
         invoice_number: invoiceData.id,
         customer: parseInt(invoiceData.customerId),
+        broker: invoiceData.brokerId ? parseInt(invoiceData.brokerId) : null,
+        commission_type: invoiceData.commissionType || '',
+        commission_value: invoiceData.commissionValue || 0,
         date: invoiceData.date,
         due_date: invoiceData.dueDate,
         notes: invoiceData.notes || '',
@@ -593,6 +661,8 @@ const App: React.FC = () => {
         return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables }} />;
       case 'vendors':
         return <VendorCenter vendors={vendors} bills={bills} inventory={inventory} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} selectedId={selectedVendorId} />;
+      case 'brokers':
+        return <BrokerCenter brokers={brokers} onAddBroker={handleAddBroker} onUpdateBroker={handleUpdateBroker} onDeleteBroker={handleDeleteBroker} />;
         case 'customers':
           return <CustomerCenter customers={customers} invoices={invoices} inventory={inventory} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} selectedId={selectedCustomerId} />;
       case 'inventory':
@@ -606,6 +676,7 @@ const App: React.FC = () => {
             onAdd={currentPage === 'invoices' ? handleAddInvoice : handleAddBill}
             vendors={vendors}
             customers={customers}
+            brokers={brokers}
             inventory={inventory}
             preFilledLot={currentPage === 'bills' ? pendingBillLot : null}
             onPayBill={handlePayBill}

@@ -62,3 +62,19 @@ class Customer(models.Model):
         balance = sum(t.get_signed_amount() for t in transactions)
         self.balance = balance
         self.save()
+
+
+class Broker(models.Model):
+    """Model for brokers who bring sales orders"""
+    name = models.CharField(max_length=255)
+    contact = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'brokers'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name

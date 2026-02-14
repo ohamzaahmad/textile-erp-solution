@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
-from .models import Vendor, Customer
-from .serializers import VendorSerializer, CustomerSerializer
+from .models import Vendor, Customer, Broker
+from .serializers import VendorSerializer, CustomerSerializer, BrokerSerializer
 
 
 class VendorViewSet(viewsets.ModelViewSet):
@@ -66,3 +66,14 @@ class CustomerViewSet(viewsets.ModelViewSet):
         customer.update_balance()
         serializer = self.get_serializer(customer)
         return Response(serializer.data)
+
+
+class BrokerViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing brokers"""
+    queryset = Broker.objects.all()
+    serializer_class = BrokerSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'contact']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']

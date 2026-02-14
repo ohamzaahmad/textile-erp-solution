@@ -26,9 +26,9 @@ class InvoiceItemInline(admin.TabularInline):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('invoice_number', 'customer', 'date', 'due_date', 'total', 'amount_paid', 'status')
-    list_filter = ('status', 'date')
-    search_fields = ('invoice_number', 'customer__name')
+    list_display = ('invoice_number', 'customer', 'broker', 'date', 'due_date', 'total', 'commission_amount', 'amount_paid', 'status')
+    list_filter = ('status', 'date', 'commission_type')
+    search_fields = ('invoice_number', 'customer__name', 'broker__name')
     readonly_fields = ('balance_due', 'created_at', 'updated_at')
     inlines = [InvoiceItemInline]
 

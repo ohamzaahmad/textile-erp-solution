@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Invoice, Bill, Vendor, Customer, InventoryItem, PaymentMethod, PaymentRecord } from '../types';
+import { Invoice, Bill, Vendor, Customer, Broker, InventoryItem, PaymentMethod, PaymentRecord } from '../types';
 import PrintPreview from './PrintPreview';
 
 interface InvoiceBillCenterProps {
@@ -9,6 +9,7 @@ interface InvoiceBillCenterProps {
   onAdd: (item: any) => void;
   vendors: Vendor[];
   customers: Customer[];
+  brokers: Broker[];
   inventory: InventoryItem[];
   preFilledLot: InventoryItem[] | null;
   onPayBill?: (billId: string, payment: PaymentRecord) => void;
@@ -27,7 +28,7 @@ interface LineItem {
 const PAK_BANKS = ['Meezan Bank', 'Habib Bank (HBL)', 'Bank Alfalah'];
 
 const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({ 
-  type, items, onAdd, vendors, customers, inventory, preFilledLot, onPayBill, onReceivePayment 
+  type, items, onAdd, vendors, customers, brokers, inventory, preFilledLot, onPayBill, onReceivePayment 
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [settlingItem, setSettlingItem] = useState<any>(null);
@@ -42,8 +43,12 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const [creationTid, setCreationTid] = useState('');
   const [creationAmount, setCreationAmount] = useState<number>(0);
   const [creationNotes, setCreationNotes] = useState('');
+  const [selectedBrokerId, setSelectedBrokerId] = useState('');
+  const [commissionType, setCommissionType] = useState<'Percentage' | 'Fixed'>('Percentage');
+  const [commissionValue, setCommissionValue] = useState<number>(0);
   const [creationDueDays, setCreationDueDays] = useState<number>(30);
   const [currentLineItem, setCurrentLineItem] = useState({ itemId: '', meters: 0, price: 0 });
+  const [brokerFilterText, setBrokerFilterText] = useState('');
 
   // Settlement Modal States
   const [settleAmount, setSettleAmount] = useState<number>(0);
@@ -93,6 +98,11 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   };
 
   const totalAmount = useMemo(() => lineItems.reduce((acc, curr) => acc + (curr.meters * curr.price), 0), [lineItems]);
+  const calculatedCommission = useMemo(() => {
+    if (type !== 'Invoice' || !selectedBrokerId || commissionValue <= 0) return 0;
+    if (commissionType === 'Percentage') return (totalAmount * commissionValue) / 100;
+    return commissionValue;
+  }, [type, selectedBrokerId, commissionType, commissionValue, totalAmount]);
 
   const handleSave = () => {
     if (!selectedEntityId || lineItems.length === 0) {
@@ -108,6 +118,11 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
     }
     if (creationAmount > totalAmountNow) {
       try { window.dispatchEvent(new CustomEvent('app-toast', { detail: { message: 'Initial payment cannot exceed document total', level: 'error' } })); } catch {}
+      return;
+    }
+
+    if (type === 'Invoice' && selectedBrokerId && commissionType === 'Percentage' && commissionValue > 100) {
+      try { window.dispatchEvent(new CustomEvent('app-toast', { detail: { message: 'Commission percentage cannot exceed 100%', level: 'error' } })); } catch {}
       return;
     }
     
@@ -131,6 +146,10 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       [type === 'Invoice' ? 'customerId' : 'vendorId']: selectedEntityId,
       date: new Date().toISOString().slice(0, 10),
       dueDate: new Date(Date.now() + (creationDueDays || 30) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      brokerId: type === 'Invoice' && selectedBrokerId ? selectedBrokerId : undefined,
+      commissionType: type === 'Invoice' && selectedBrokerId ? commissionType : '',
+      commissionValue: type === 'Invoice' && selectedBrokerId ? commissionValue : 0,
+      commissionAmount: type === 'Invoice' && selectedBrokerId ? calculatedCommission : 0,
       items: lineItems.map(li => ({ itemId: li.itemId, meters: li.meters, price: li.price })),
       total: totalAmount,
       amountPaid: initialPayment ? creationAmount : 0,
@@ -150,6 +169,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
     setCreationAmount(0);
     setCreationTid('');
     setCreationNotes('');
+    setSelectedBrokerId('');
+    setCommissionType('Percentage');
+    setCommissionValue(0);
     setCreationDueDays(30);
   };
 
@@ -210,6 +232,15 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
   }, [items]);
+
+  const filteredItems = useMemo(() => {
+    if (type !== 'Invoice' || !brokerFilterText.trim()) return sortedItems;
+    const q = brokerFilterText.trim().toLowerCase();
+    return sortedItems.filter((it: any) => {
+      const brokerName = (it.brokerName || brokers.find((b: any) => b.id === it.brokerId)?.name || '').toString().toLowerCase();
+      return brokerName.includes(q);
+    });
+  }, [sortedItems, brokerFilterText, brokers, type]);
 
   // Print view moved to shared component PrintPreview
 
@@ -298,12 +329,23 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
           </div>
         </div>
         {!isCreating && type !== 'Bill' && (
-          <button 
-            onClick={() => setIsCreating(true)}
-            className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all duration-300 ease-in-out shadow-lg active:scale-95 transform uppercase tracking-widest"
-          >
-            <i className="fas fa-plus mr-2"></i> Create New {type}
-          </button>
+          <div className="flex items-center space-x-3">
+            {type === 'Invoice' && (
+              <input
+                type="text"
+                placeholder="Filter by broker..."
+                value={brokerFilterText}
+                onChange={e => setBrokerFilterText(e.target.value)}
+                className="text-sm font-bold p-2 border border-slate-200 rounded-lg shadow-sm bg-white outline-none w-56"
+              />
+            )}
+            <button 
+              onClick={() => setIsCreating(true)}
+              className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all duration-300 ease-in-out shadow-lg active:scale-95 transform uppercase tracking-widest"
+            >
+              <i className="fas fa-plus mr-2"></i> Create New {type}
+            </button>
+          </div>
         )}
       </div>
 
@@ -335,6 +377,47 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                       <option value="">-- Choose Party --</option>
                       {(type === 'Invoice' ? customers : vendors).map(e => <option key={e.id} value={e.id}>{e.name} (PKR {e.balance.toLocaleString()})</option>)}
                     </select>
+
+                    {type === 'Invoice' && (
+                      <div className="mt-6 space-y-3">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Broker & Commission</label>
+                        <select
+                          value={selectedBrokerId}
+                          onChange={e => setSelectedBrokerId(e.target.value)}
+                          className="w-full border border-slate-200 rounded-xl p-3 bg-white text-[11px] font-bold shadow-sm"
+                        >
+                          <option value="">-- No Broker --</option>
+                          {brokers.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        </select>
+
+                        {selectedBrokerId && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <select
+                              value={commissionType}
+                              onChange={e => setCommissionType(e.target.value as 'Percentage' | 'Fixed')}
+                              className="border border-slate-200 rounded-xl p-3 bg-white text-[11px] font-bold shadow-sm"
+                            >
+                              <option value="Percentage">Percentage (%)</option>
+                              <option value="Fixed">Fixed Amount</option>
+                            </select>
+                            <input
+                              type="number"
+                              min="0"
+                              value={commissionValue || ''}
+                              onChange={e => setCommissionValue(parseFloat(e.target.value) || 0)}
+                              className="border border-slate-200 rounded-xl p-3 bg-white text-[11px] font-bold shadow-sm text-right"
+                              placeholder={commissionType === 'Percentage' ? '0 - 100' : '0.00'}
+                            />
+                          </div>
+                        )}
+
+                        {selectedBrokerId && (
+                          <p className="text-[10px] font-black text-[#7d2b3f]">
+                            Commission Payable: PKR {calculatedCommission.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    )}
                  </div>
                  
                  <div className="bg-[#f0f3f6] p-6 rounded-2xl border border-slate-200 space-y-4">
@@ -514,14 +597,16 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Date</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Days Remaining</th>
                 <th className="p-5 font-black text-slate-500 uppercase tracking-widest">{type === 'Invoice' ? 'Customer' : 'Supplier'}</th>
+                <th className="p-5 font-black text-slate-500 uppercase tracking-widest">Broker</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Settlement Log</th>
                 <th className="p-5 text-right font-black text-slate-500 uppercase tracking-widest">Total Amount</th>
+                <th className="p-5 text-right font-black text-slate-500 uppercase tracking-widest">Commission</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Status</th>
                 <th className="p-5 text-center font-black text-slate-500 uppercase tracking-widest">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {sortedItems.map((item: any) => {
+              {filteredItems.map((item: any) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 const dueDate = item.dueDate ? new Date(item.dueDate) : null;
@@ -554,6 +639,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                     <td className="p-5 font-black text-slate-800 uppercase tracking-tighter">
                       {type === 'Invoice' ? customers.find(c => c.id === item.customerId)?.name : vendors.find(v => v.id === item.vendorId)?.name}
                     </td>
+                    <td className="p-5 font-bold text-slate-600 uppercase tracking-tight">
+                      {type === 'Invoice' ? (item.brokerName || brokers.find(b => b.id === item.brokerId)?.name || '-') : '-'}
+                    </td>
                     <td className="p-5 text-center">
                       <button 
                         onClick={() => setExpandedDocId(expandedDocId === item.id ? null : item.id)}
@@ -563,6 +651,9 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                       </button>
                     </td>
                     <td className="p-5 font-black text-right text-slate-900">PKR {item.total.toLocaleString()}</td>
+                    <td className="p-5 font-black text-right text-slate-700">
+                      {type === 'Invoice' && item.commissionAmount ? `PKR ${item.commissionAmount.toLocaleString()}` : '-'}
+                    </td>
                     <td className="p-5 text-center">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                         item.status === 'Paid' ? 'bg-green-100 text-green-700 border-green-200' : 
@@ -585,7 +676,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
                   {/* Expanded Payment Log Section */}
                   {expandedDocId === item.id && (
                     <tr>
-                      <td colSpan={8} className="p-0 bg-blue-50/20 border-l-4 border-[#2b5797]">
+                      <td colSpan={10} className="p-0 bg-blue-50/20 border-l-4 border-[#2b5797]">
                          <div className="p-5 animate-in slide-in-from-top-2 duration-300">
                             <div className="bg-white rounded-xl border border-blue-100 overflow-hidden shadow-inner">
                                <div className="bg-blue-50 px-4 py-2 text-[10px] font-black text-[#2b5797] uppercase tracking-widest flex justify-between">
@@ -628,7 +719,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
               );
               })}
               {items.length === 0 && (
-                <tr><td colSpan={8} className="p-40 text-center text-slate-300 italic uppercase font-black opacity-30 tracking-[10px]">No Documents Found</td></tr>
+                <tr><td colSpan={10} className="p-40 text-center text-slate-300 italic uppercase font-black opacity-30 tracking-[10px]">No Documents Found</td></tr>
               )}
             </tbody>
           </table>

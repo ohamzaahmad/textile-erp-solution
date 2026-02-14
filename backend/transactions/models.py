@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
-from accounts.models import Vendor, Customer
+from accounts.models import Vendor, Customer, Broker
 from inventory.models import InventoryItem
 
 
@@ -110,6 +110,11 @@ class Invoice(models.Model):
         ('Partially Paid', 'Partially Paid'),
         ('Paid', 'Paid'),
     ]
+
+    COMMISSION_TYPES = [
+        ('Percentage', 'Percentage'),
+        ('Fixed', 'Fixed Amount'),
+    ]
     
     invoice_number = models.CharField(max_length=50, unique=True)
     customer = models.ForeignKey(
@@ -117,10 +122,20 @@ class Invoice(models.Model):
         on_delete=models.PROTECT,
         related_name='invoices'
     )
+    broker = models.ForeignKey(
+        Broker,
+        on_delete=models.PROTECT,
+        related_name='invoices',
+        null=True,
+        blank=True
+    )
     date = models.DateField()
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    commission_type = models.CharField(max_length=20, choices=COMMISSION_TYPES, blank=True)
+    commission_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    commission_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     amount_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     notes = models.TextField(blank=True)
     
@@ -147,6 +162,19 @@ class Invoice(models.Model):
         else:
             self.status = 'Pending'
         self.save()
+
+    def calculate_commission_amount(self):
+        """Calculate commission amount from type and value"""
+        if not self.broker or self.commission_value <= 0:
+            return Decimal('0.00')
+
+        if self.commission_type == 'Percentage':
+            return (self.total * self.commission_value) / Decimal('100')
+
+        if self.commission_type == 'Fixed':
+            return self.commission_value
+
+        return Decimal('0.00')
 
 
 class InvoiceItem(models.Model):

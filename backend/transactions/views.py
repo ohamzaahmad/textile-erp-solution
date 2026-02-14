@@ -65,13 +65,13 @@ class PaymentRecordViewSet(viewsets.ReadOnlyModelViewSet):
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     """ViewSet for managing invoices"""
-    queryset = Invoice.objects.all().select_related('customer').prefetch_related('items', 'payment_records')
+    queryset = Invoice.objects.all().select_related('customer', 'broker').prefetch_related('items', 'payment_records')
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'customer']
-    search_fields = ['invoice_number', 'customer__name']
-    ordering_fields = ['date', 'due_date', 'total']
+    filterset_fields = ['status', 'customer', 'broker', 'commission_type']
+    search_fields = ['invoice_number', 'customer__name', 'broker__name']
+    ordering_fields = ['date', 'due_date', 'total', 'commission_amount']
     ordering = ['-date']
     
     def get_serializer_class(self):

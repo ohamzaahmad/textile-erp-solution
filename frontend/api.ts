@@ -1,9 +1,9 @@
 // API Configuration and Client for HA FABRICS ERP
 
-// const API_BASE_URL = 'http://192.168.1.16:8000/api';
+const API_BASE_URL = 'http://192.168.1.16:8000/api';
 // const API_BASE_URL = 'http://192.168.1.26:8000/api';
 // const API_BASE_URL = '127.0.0.1:8000/api';
-const API_BASE_URL = 'http://172.172.173.186:8000/api';
+// const API_BASE_URL = 'http://172.172.173.186:8000/api';
 
 
 // Token management
@@ -215,6 +215,14 @@ export const customersAPI = {
   delete: (id: string) => api.delete(`/customers/${id}/`),
   getTransactions: (id: string) => api.get<any[]>(`/customers/${id}/transactions/`),
   updateBalance: (id: string) => api.post<any>(`/customers/${id}/update_balance/`, {}),
+};
+
+export const brokersAPI = {
+  getAll: () => api.get<any[]>('/brokers/'),
+  getById: (id: string) => api.get<any>(`/brokers/${id}/`),
+  create: (data: any) => api.post<any>('/brokers/', data),
+  update: (id: string, data: any) => api.put<any>(`/brokers/${id}/`, data),
+  delete: (id: string) => api.delete(`/brokers/${id}/`),
 };
 
 export const inventoryAPI = {

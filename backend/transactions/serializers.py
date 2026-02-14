@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 from .models import (
     Transaction, PaymentRecord, Invoice, InvoiceItem, 
@@ -52,12 +53,14 @@ class InvoiceSerializer(serializers.ModelSerializer):
     items = InvoiceItemSerializer(many=True, read_only=True)
     payment_records = PaymentRecordSerializer(many=True, read_only=True)
     customer_name = serializers.CharField(source='customer.name', read_only=True)
+    broker_name = serializers.CharField(source='broker.name', read_only=True)
     balance_due = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     
     class Meta:
         model = Invoice
         fields = [
             'id', 'invoice_number', 'customer', 'customer_name',
+            'broker', 'broker_name', 'commission_type', 'commission_value', 'commission_amount',
             'date', 'due_date', 'status', 'total', 'amount_paid',
             'balance_due', 'notes', 'items', 'payment_records',
             'created_at', 'updated_at'
@@ -73,9 +76,37 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
         model = Invoice
         fields = [
             'id', 'invoice_number', 'customer', 'date', 'due_date',
+            'broker', 'commission_type', 'commission_value',
             'notes', 'items'
         ]
         read_only_fields = ['id']
+
+    def validate(self, attrs):
+        broker = attrs.get('broker')
+        commission_type = attrs.get('commission_type', '')
+        commission_value = attrs.get('commission_value', Decimal('0'))
+
+        if broker and not commission_type:
+            raise serializers.ValidationError({
+                'commission_type': 'Commission type is required when broker is selected.'
+            })
+
+        if commission_type and not broker:
+            raise serializers.ValidationError({
+                'broker': 'Broker is required when commission is provided.'
+            })
+
+        if commission_value and commission_value < 0:
+            raise serializers.ValidationError({
+                'commission_value': 'Commission value cannot be negative.'
+            })
+
+        if commission_type == 'Percentage' and commission_value > 100:
+            raise serializers.ValidationError({
+                'commission_value': 'Percentage commission cannot exceed 100.'
+            })
+
+        return attrs
     
     def create(self, validated_data):
         items_data = validated_data.pop('items')
@@ -87,6 +118,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
             total += item.subtotal
         
         invoice.total = total
+        invoice.commission_amount = invoice.calculate_commission_amount()
         invoice.save()
         
         # Create transaction record

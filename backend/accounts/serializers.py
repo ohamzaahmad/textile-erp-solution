@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Vendor, Customer
+from .models import Vendor, Customer, Broker
 
 
 class VendorSerializer(serializers.ModelSerializer):
@@ -24,3 +24,15 @@ class CustomerSerializer(serializers.ModelSerializer):
             'balance', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'balance', 'created_at', 'updated_at']
+
+
+class BrokerSerializer(serializers.ModelSerializer):
+    """Serializer for Broker model"""
+
+    class Meta:
+        model = Broker
+        fields = [
+            'id', 'name', 'contact', 'address',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']

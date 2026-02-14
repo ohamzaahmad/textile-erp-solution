@@ -7,7 +7,7 @@ export interface User {
   name: string;
 }
 
-export type Page = 'home' | 'vendors' | 'customers' | 'inventory' | 'invoices' | 'bills' | 'reports' | 'deposits' | 'itemMaster' | 'expenses' | 'imports';
+export type Page = 'home' | 'vendors' | 'brokers' | 'customers' | 'inventory' | 'invoices' | 'bills' | 'reports' | 'deposits' | 'itemMaster' | 'expenses' | 'imports';
 
 export interface Vendor {
   id: string;
@@ -27,6 +27,13 @@ export interface Customer {
   shortDescription?: string;
   balance: number;
   logs: Transaction[];
+}
+
+export interface Broker {
+  id: string;
+  name: string;
+  contact?: string;
+  address?: string;
 }
 
 export interface InventoryItem {
@@ -63,6 +70,11 @@ export interface PaymentRecord {
 export interface Invoice {
   id: string;
   customerId: string;
+  brokerId?: string;
+  brokerName?: string;
+  commissionType?: 'Percentage' | 'Fixed';
+  commissionValue?: number;
+  commissionAmount?: number;
   date: string;
   dueDate: string;
   items: { itemId: string; meters: number; price: number }[];
