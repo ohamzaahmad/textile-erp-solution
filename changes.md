@@ -37,6 +37,11 @@
   - Integrated in app routing/state
 - Added broker search/filter in Sales list view (`InvoiceBillCenter`) allowing quick filtering by broker name.
 
+- Fixed CSV import parsing and numeric parsing in `frontend/components/Imports.tsx`:
+  - `parseCsv` now handles quoted fields and commas properly.
+  - Numeric fields (meters, prices, ids) are normalized to remove thousands separators and currency symbols before parsing.
+  - `parseItemsCell` now tolerates numeric ids with separators and non-numeric inventory identifiers.
+
 ### New migrations
 - `backend/accounts/migrations/0002_broker.py`
 - `backend/transactions/migrations/0002_invoice_broker_and_commission.py`

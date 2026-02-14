@@ -2,16 +2,58 @@ import React, { useEffect, useState, useRef } from 'react';
 import { vendorsAPI, customersAPI, invoicesAPI, billsAPI, inventoryAPI, emitToast } from '../api';
 
 const parseCsv = (text: string) => {
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  // Simple RFC4180-style line parser that handles quoted fields with commas
+  const rawLines = text.split(/\r?\n/);
+  const lines = rawLines.map(l => l).filter(l => l.trim() !== '');
   if (lines.length === 0) return { headers: [], rows: [] };
-  const headers = lines[0].split(',').map(h => h.trim());
+
+  const parseLine = (line: string) => {
+    const cols: string[] = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i += 1) {
+      const ch = line[i];
+      if (ch === '"') {
+        // handle escaped double quotes ""
+        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        cols.push(cur.trim());
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    cols.push(cur.trim());
+    return cols.map(c => {
+      // strip surrounding quotes if present
+      if (c.startsWith('"') && c.endsWith('"')) return c.slice(1, -1).replace(/""/g, '"');
+      return c;
+    });
+  };
+
+  const headers = parseLine(lines[0]).map(h => h.trim());
   const rows = lines.slice(1).map(line => {
-    const cols = line.split(',').map(c => c.trim());
+    const cols = parseLine(line);
     const obj: any = {};
-    headers.forEach((h, i) => obj[h] = cols[i] || '');
+    headers.forEach((h, i) => obj[h] = cols[i] !== undefined ? cols[i] : '');
     return obj;
   });
   return { headers, rows };
+};
+
+// normalize numeric-like strings: remove thousands separators, currency symbols
+const normalizeNumber = (v: any) => {
+  if (v === null || v === undefined) return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  // Remove common currency signs and spaces, keep digits, minus and dot
+  const cleaned = s.replace(/[,\s]+/g, '').replace(/[^0-9.\-]/g, '');
+  return cleaned;
 };
 
 const FileDropArea: React.FC<{onFile: (f?: File) => void, accept?: string}> = ({ onFile, accept = '.csv' }) => {
@@ -242,7 +284,11 @@ const parseItemsCell = (cell: string) => {
   // fallback parse
   return cell.split(';').map(part => {
     const [inventory_item, meters, price] = part.split('|').map(s => s && s.trim());
-    return { inventory_item: parseInt(inventory_item || '0'), meters: parseFloat(meters || '0'), price: parseFloat(price || '0') };
+    const inv = inventory_item || '';
+    const metersNum = parseFloat(normalizeNumber(meters || '0')) || 0;
+    const priceNum = parseFloat(normalizeNumber(price || '0')) || 0;
+    const invParsed = /^[0-9]+$/.test(inv) ? parseInt(normalizeNumber(inv)) : inv;
+    return { inventory_item: invParsed, meters: metersNum, price: priceNum };
   }).filter(p => p && p.inventory_item);
 };
 
@@ -272,7 +318,7 @@ const InvoicesImport: React.FC<{vendorsMap: Record<string,string>, customersMap:
     const items = parseItemsCell(itemsCell);
     return {
       invoice_number: row['invoice_number'] || row['InvoiceNumber'] || row['id'] || '',
-      customer: customerId ? parseInt(customerId) : undefined,
+      customer: customerId ? parseInt(normalizeNumber(customerId)) : undefined,
       date: row['date'] || '',
       due_date: row['due_date'] || row['dueDate'] || '',
       notes: row['notes'] || '',
@@ -481,9 +527,9 @@ const InventoryImport: React.FC<{vendorsMap: Record<string,string>, onImported?:
     return {
       lot_number: row['lot_number'] || row['lot'] || row['Lot'] || '',
       fabric_type: row['fabric_type'] || row['type'] || row['FabricType'] || '',
-      meters: parseFloat(row['meters'] || row['quantity'] || '0') || 0,
-      unit_price: parseFloat(row['unit_price'] || row['price'] || '0') || 0,
-      vendor: vendorId ? parseInt(vendorId) : undefined,
+      meters: parseFloat(normalizeNumber(row['meters'] || row['quantity'] || '0')) || 0,
+      unit_price: parseFloat(normalizeNumber(row['unit_price'] || row['price'] || '0')) || 0,
+      vendor: vendorId ? parseInt(normalizeNumber(vendorId)) : undefined,
       received_date: row['received_date'] || row['date'] || ''
     };
   };
