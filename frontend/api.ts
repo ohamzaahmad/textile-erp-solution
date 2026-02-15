@@ -1,6 +1,6 @@
 // API Configuration and Client for HA FABRICS ERP
 
-const API_BASE_URL = 'http://192.168.1.16:8000/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000/api'|| 'http://192.168.1.16:8000/api';
 // const API_BASE_URL = 'http://192.168.1.26:8000/api';
 // const API_BASE_URL = '127.0.0.1:8000/api';
 // const API_BASE_URL = 'http://172.172.173.186:8000/api';
