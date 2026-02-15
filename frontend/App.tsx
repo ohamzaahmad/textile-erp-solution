@@ -171,6 +171,7 @@ const App: React.FC = () => {
     commissionType: data.commission_type || undefined,
     commissionValue: parseFloat(data.commission_value) || 0,
     commissionAmount: parseFloat(data.commission_amount) || 0,
+    commissionPaid: parseFloat(data.commission_paid) || 0,
     date: data.date || '',
     dueDate: data.due_date || '',
     items: data.items?.map((item: any) => ({
@@ -188,6 +189,14 @@ const App: React.FC = () => {
       method: pr.method || 'Cash',
       bankName: pr.bank_name || '',
       tid: pr.tid || ''
+    })) || [],
+    commissionPayments: data.commission_payments?.map((cp: any) => ({
+      id: String(cp.id),
+      date: cp.date || '',
+      amount: parseFloat(cp.amount) || 0,
+      method: cp.method || 'Cash',
+      bankName: cp.bank_name || '',
+      tid: cp.tid || ''
     })) || []
   });
 
@@ -460,6 +469,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSettleCommission = async (invoiceId: string, paymentData: { date: string; amount: number; method: string; bank_name?: string; tid?: string }) => {
+    try {
+      const result = await invoicesAPI.settleCommission(invoiceId, paymentData);
+      // Reload invoices to get updated commission_paid and commission_payments
+      const [invoiceRes] = await Promise.all([invoicesAPI.getAll()]);
+      setInvoices(invoiceRes.map(mapInvoice));
+      return true;
+    } catch (error) {
+      console.error('Error settling commission:', error);
+      alert('Failed to settle commission.');
+      return false;
+    }
+  };
+
   const handleAddBill = async (billData: any) => {
     try {
       const backendData = {
@@ -658,11 +681,12 @@ const App: React.FC = () => {
         // compute financial summary from invoices and bills
         const payables = bills.reduce((acc, b) => acc + (parseFloat(String(b.total || 0)) - parseFloat(String(b.amountPaid || 0))), 0);
         const receivables = invoices.reduce((acc, i) => acc + (parseFloat(String(i.total || 0)) - parseFloat(String(i.amountPaid || 0))), 0);
-        return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables }} />;
+        const commissionPayable = invoices.reduce((acc, i) => acc + Math.max(0, (i.commissionAmount || 0) - (i.commissionPaid || 0)), 0);
+        return <FlowchartDashboard onNavigate={setCurrentPage} financialSummary={{ payables, receivables, commissionPayable }} />;
       case 'vendors':
         return <VendorCenter vendors={vendors} bills={bills} inventory={inventory} onPayBill={handlePayBill} onAddVendor={handleAddVendor} onUpdateVendor={handleUpdateVendor} currentUser={currentUser} selectedId={selectedVendorId} />;
       case 'brokers':
-        return <BrokerCenter brokers={brokers} onAddBroker={handleAddBroker} onUpdateBroker={handleUpdateBroker} onDeleteBroker={handleDeleteBroker} />;
+        return <BrokerCenter brokers={brokers} invoices={invoices} customers={customers} onAddBroker={handleAddBroker} onUpdateBroker={handleUpdateBroker} onDeleteBroker={handleDeleteBroker} onSettleCommission={handleSettleCommission} onNavigate={(page, id) => { setCurrentPage(page); if (page === 'customers') setSelectedCustomerId(id || null); }} />;
         case 'customers':
           return <CustomerCenter customers={customers} invoices={invoices} inventory={inventory} onReceivePayment={handleReceivePayment} onAddCustomer={handleAddCustomer} onUpdateCustomer={handleUpdateCustomer} currentUser={currentUser} selectedId={selectedCustomerId} />;
       case 'inventory':
@@ -685,18 +709,18 @@ const App: React.FC = () => {
         );
 
       case 'deposits':
-        return <DepositsCenter invoices={invoices} bills={bills} />;
+        return <DepositsCenter invoices={invoices} bills={bills} brokers={brokers} />;
       case 'itemMaster':
         return <ItemMasterCenter inventory={inventory} />;
       case 'expenses':
         return <ExpensesCenter expenses={expenses} onExpensesChange={setExpenses} />;
       case 'reports':
-        return <ReportsCenter invoices={invoices} bills={bills} expenses={expenses} vendors={vendors} customers={customers}
+        return <ReportsCenter invoices={invoices} bills={bills} expenses={expenses} vendors={vendors} customers={customers} brokers={brokers}
           onNavigate={(page, id) => {
-            setCurrentPage(page === 'vendors' ? 'vendors' : 'customers');
+            setCurrentPage(page === 'vendors' ? 'vendors' : page === 'brokers' ? 'brokers' : 'customers');
             if (page === 'vendors') setSelectedVendorId(id || null);
-            else setSelectedCustomerId(id || null);
-            try { window.location.hash = `#${page === 'vendors' ? 'vendors' : 'customers'}`; } catch {}
+            else if (page === 'customers') setSelectedCustomerId(id || null);
+            try { window.location.hash = `#${page}`; } catch {}
           }}
         />;
       case 'imports':

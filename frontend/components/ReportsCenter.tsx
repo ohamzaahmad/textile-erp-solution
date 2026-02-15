@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import { Invoice, Bill, Expense, Vendor, Customer } from '../types';
+import { Invoice, Bill, Expense, Vendor, Customer, Broker } from '../types';
 import { 
   BarChart, 
   Bar, 
@@ -21,10 +21,11 @@ interface ReportsCenterProps {
   expenses: Expense[];
   vendors: Vendor[];
   customers: Customer[];
-  onNavigate?: (page: 'vendors' | 'customers', id?: string) => void;
+  brokers: Broker[];
+  onNavigate?: (page: 'vendors' | 'customers' | 'brokers', id?: string) => void;
 }
 
-const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses, vendors, customers, onNavigate }) => {
+const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses, vendors, customers, brokers, onNavigate }) => {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'all'>('daily');
 
   const COLORS = ['#10b981', '#ef4444', '#3b82f6'];
@@ -64,7 +65,10 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
   const totalBillExpenses = filteredBills.reduce((acc, curr) => acc + curr.total, 0);
   const totalOperationalExpenses = filteredExpenses.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalExpenses = totalBillExpenses + totalOperationalExpenses;
-  const netProfit = totalSales - totalExpenses;
+  const totalCommission = filteredInvoices.reduce((acc, inv) => acc + (inv.commissionAmount || 0), 0);
+  const totalCommissionPaid = filteredInvoices.reduce((acc, inv) => acc + (inv.commissionPaid || 0), 0);
+  const totalCommissionOutstanding = totalCommission - totalCommissionPaid;
+  const netProfit = totalSales - totalExpenses - totalCommissionPaid;
 
   const data = [
     { name: 'Total Sales', amount: totalSales },
@@ -85,7 +89,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
   };
 
   const exportBalanceSheet = () => {
-    // Recreate the receivable/payable items using the same logic and range
+    // Recreate the receivable/payable/commission items using the same logic and range
     const receivableItems = invoices
       .map(inv => ({
         date: inv.date || '',
@@ -112,7 +116,20 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
       .filter(b => b.amount > 0)
       .filter(b => !!b.date && new Date(b.date) >= range.start && new Date(b.date) <= range.end);
 
-    const combined = [...receivableItems, ...payableItems].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const commissionItems = invoices
+      .filter(inv => inv.brokerId && (inv.commissionAmount || 0) > (inv.commissionPaid || 0))
+      .map(inv => ({
+        date: inv.date || '',
+        type: 'COMMISSION',
+        reference: `Inv #${inv.id}`,
+        partyId: inv.brokerId || '',
+        party: brokers.find(b => b.id === inv.brokerId)?.name || 'Broker',
+        amount: Math.max(0, (inv.commissionAmount || 0) - (inv.commissionPaid || 0)),
+        isIncome: false
+      }))
+      .filter(c => !!c.date && new Date(c.date) >= range.start && new Date(c.date) <= range.end);
+
+    const combined = [...receivableItems, ...payableItems, ...commissionItems].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     let running = 0;
     const rows = combined.map(it => {
@@ -140,6 +157,21 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
   };
 
   const exportDailyLog = () => {
+    // Build commission payment entries
+    const commissionEntries = invoices.flatMap(inv => {
+      const brokerName = brokers.find(b => b.id === inv.brokerId)?.name || 'Broker';
+      return (inv.commissionPayments || []).map(cp => ({
+        id: `COMM-${cp.id}`,
+        date: cp.date,
+        type: 'COMMISSION' as const,
+        amount: cp.amount,
+        isIncome: false,
+        partyId: inv.brokerId,
+        party: brokerName,
+        description: `Commission for Inv #${inv.id} (${cp.method}${cp.bankName ? ' - ' + cp.bankName : ''})`
+      }));
+    });
+
     // Build same sortedItems used by the daily log (respecting range)
     const sortedItems = [...invoices.map((inv: any) => ({
         ...inv,
@@ -157,7 +189,8 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
         partyId: bill.vendorId,
         party: (vendors.find((v: any) => v.id === String(bill.vendorId))?.name) || bill.vendorId
       })),
-      ...expenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: Number(exp.amount), isIncome: false, partyId: undefined, party: '' }))]
+      ...expenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: Number(exp.amount), isIncome: false, partyId: undefined, party: '' })),
+      ...commissionEntries]
       .filter((it: any) => !!it.date && new Date(it.date) >= range.start && new Date(it.date) <= range.end)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -167,7 +200,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
       return {
         date: item.date,
         type: item.type,
-        reference: item.type === 'EXPENSE' ? item.description : item.id,
+        reference: item.type === 'EXPENSE' ? item.description : item.type === 'COMMISSION' ? item.description : item.id,
         party: item.party || '',
         cashIn: item.isIncome ? item.amount : 0,
         cashOut: !item.isIncome ? item.amount : 0,
@@ -187,7 +220,7 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
 
   return (
     <div className="space-y-6 bg-slate-100 p-4 rounded shadow-inner min-h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4 transition-all duration-300 hover:shadow-md hover:scale-105">
            <div className="w-12 h-12 bg-green-50 text-green-600 flex items-center justify-center rounded-full">
               <i className="fas fa-arrow-up text-xl"></i>
@@ -206,6 +239,18 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
               <p className="text-xl font-bold text-slate-700">Rs. {totalExpenses.toLocaleString()}</p>
            </div>
         </div>
+        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4 transition-all duration-300 hover:shadow-md hover:scale-105">
+           <div className="w-12 h-12 bg-amber-50 text-amber-600 flex items-center justify-center rounded-full">
+              <i className="fas fa-user-tie text-xl"></i>
+           </div>
+           <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Commission Paid</p>
+              <p className="text-xl font-bold text-amber-700">Rs. {totalCommissionPaid.toLocaleString()}</p>
+              {totalCommissionOutstanding > 0 && (
+                <p className="text-[9px] font-bold text-red-500">Outstanding: Rs. {totalCommissionOutstanding.toLocaleString()}</p>
+              )}
+           </div>
+        </div>
         <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4">
            <div className="w-12 h-12 bg-blue-50 text-blue-600 flex items-center justify-center rounded-full">
               <i className="fas fa-wallet text-xl"></i>
@@ -214,6 +259,17 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
               <p className="text-[10px] font-bold text-slate-400 uppercase">Net Profitability</p>
               <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
                 Rs. {netProfit.toLocaleString()}
+              </p>
+           </div>
+        </div>
+        <div className="bg-white p-6 rounded border border-slate-300 shadow-sm flex items-center space-x-4">
+           <div className="w-12 h-12 bg-purple-50 text-purple-600 flex items-center justify-center rounded-full">
+              <i className="fas fa-scale-balanced text-xl"></i>
+           </div>
+           <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Total Liabilities</p>
+              <p className="text-xl font-bold text-purple-700">
+                Rs. {(totalExpenses + totalCommissionOutstanding).toLocaleString()}
               </p>
            </div>
         </div>
@@ -260,6 +316,21 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
                </tr>
             ) : (
               (() => {
+                // Build commission payment entries from invoice commission payments
+                const commissionEntries = filteredInvoices.flatMap(inv => {
+                  const brokerName = brokers.find(b => b.id === inv.brokerId)?.name || 'Broker';
+                  return (inv.commissionPayments || []).map(cp => ({
+                    id: `COMM-${cp.id}`,
+                    date: cp.date,
+                    type: 'COMMISSION' as const,
+                    amount: cp.amount,
+                    isIncome: false,
+                    partyId: inv.brokerId,
+                    party: brokerName,
+                    description: `Commission for Inv #${inv.id} (${cp.method}${cp.bankName ? ' - ' + cp.bankName : ''})`
+                  }));
+                }).filter(e => !!e.date && new Date(e.date) >= range.start && new Date(e.date) <= range.end);
+
                 // Sort chronologically (oldest first) to calculate running balance
                 const sortedItems = [...filteredInvoices.map((inv: any) => ({
                     ...inv,
@@ -277,7 +348,8 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
                     partyId: bill.vendorId,
                     party: (vendors.find((v: any) => v.id === String(bill.vendorId))?.name) || bill.vendorId
                   })),
-                  ...filteredExpenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: Number(exp.amount), isIncome: false, partyId: undefined, party: '' }))]
+                  ...filteredExpenses.map((exp: Expense) => ({ ...exp, type: 'EXPENSE', amount: Number(exp.amount), isIncome: false, partyId: undefined, party: '' })),
+                  ...commissionEntries]
                   .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 
                 let runningBalance = 0;
@@ -297,11 +369,11 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
                         {item.type}
                       </span>
                     </td>
-                    <td className="p-2">{item.type === 'EXPENSE' ? item.description : item.id}</td>
+                    <td className="p-2">{item.type === 'EXPENSE' ? item.description : item.type === 'COMMISSION' ? item.description : item.id}</td>
                     <td className="p-2">
                       {item.party ? (
                         onNavigate ? (
-                          <button onClick={() => onNavigate(item.isIncome ? 'customers' : 'vendors', item.partyId)} className="text-blue-600 hover:underline font-bold">
+                          <button onClick={() => onNavigate(item.type === 'COMMISSION' ? 'brokers' : item.isIncome ? 'customers' : 'vendors', item.partyId)} className="text-blue-600 hover:underline font-bold">
                             {item.party}
                           </button>
                         ) : (
@@ -326,11 +398,12 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
 
       <div className="bg-white p-6 rounded border border-slate-300 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-          <h3 className="text-sm font-bold text-slate-600">Balance Sheet (Receivables & Payables)</h3>
+          <h3 className="text-sm font-bold text-slate-600">Balance Sheet (Receivables, Payables & Commissions)</h3>
           <div className="flex items-center space-x-4">
             <div className="text-[12px] font-black text-slate-700">
               <span className="mr-4">Receivables: Rs. {filteredInvoices.reduce((acc, i) => acc + Math.max(0, (i.total - (i.amountPaid || 0))), 0).toLocaleString()}</span>
-              <span className="text-red-700">Payables: Rs. {filteredBills.reduce((acc, b) => acc + Math.max(0, (b.total - (b.amountPaid || 0))), 0).toLocaleString()}</span>
+              <span className="mr-4 text-red-700">Payables: Rs. {filteredBills.reduce((acc, b) => acc + Math.max(0, (b.total - (b.amountPaid || 0))), 0).toLocaleString()}</span>
+              <span className="text-amber-700">Commission: Rs. {filteredInvoices.reduce((acc, inv) => acc + Math.max(0, (inv.commissionAmount || 0) - (inv.commissionPaid || 0)), 0).toLocaleString()}</span>
             </div>
             <button onClick={exportBalanceSheet} className="text-[12px] font-bold text-blue-600 hover:underline">
               <i className="fas fa-file-export mr-1"></i> Export to Excel
@@ -350,32 +423,47 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
           </thead>
           <tbody>
             {(() => {
-              // Build combined items from outstanding receivables and payables
+              // Build combined items from outstanding receivables, payables, and commission payables
               const receivableItems = filteredInvoices
                 .map(inv => ({
                   date: inv.date || '',
-                  type: 'RECEIVABLE',
+                  type: 'RECEIVABLE' as const,
                   reference: inv.id,
                   partyId: inv.customerId,
                   party: (customers.find(c => c.id === String(inv.customerId))?.name) || inv.customerId,
                   amount: Math.max(0, inv.total - (inv.amountPaid || 0)),
-                  isIncome: true
+                  isIncome: true,
+                  navigateTo: 'customers' as const
                 }))
                 .filter(i => i.amount > 0);
 
               const payableItems = filteredBills
                 .map(bill => ({
                   date: bill.date || '',
-                  type: 'PAYABLE',
+                  type: 'PAYABLE' as const,
                   reference: bill.id,
                   partyId: bill.vendorId,
                   party: (vendors.find(v => v.id === String(bill.vendorId))?.name) || bill.vendorId,
                   amount: Math.max(0, bill.total - (bill.amountPaid || 0)),
-                  isIncome: false
+                  isIncome: false,
+                  navigateTo: 'vendors' as const
                 }))
                 .filter(b => b.amount > 0);
 
-              const combined = [...receivableItems, ...payableItems]
+              const commissionItems = filteredInvoices
+                .filter(inv => inv.brokerId && (inv.commissionAmount || 0) > (inv.commissionPaid || 0))
+                .map(inv => ({
+                  date: inv.date || '',
+                  type: 'COMMISSION' as const,
+                  reference: `Inv #${inv.id}`,
+                  partyId: inv.brokerId || '',
+                  party: brokers.find(b => b.id === inv.brokerId)?.name || 'Broker',
+                  amount: Math.max(0, (inv.commissionAmount || 0) - (inv.commissionPaid || 0)),
+                  isIncome: false,
+                  navigateTo: 'brokers' as const
+                }));
+
+              const combined = [...receivableItems, ...payableItems, ...commissionItems]
                 .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
               let running = 0;
@@ -387,11 +475,11 @@ const ReportsCenter: React.FC<ReportsCenterProps> = ({ invoices, bills, expenses
               return withBalance.reverse().map((item: any, idx: number) => (
                 <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="p-2">{item.date}</td>
-                  <td className="p-2"><span className={`font-black ${item.isIncome ? 'text-green-600' : 'text-red-600'}`}>{item.type}</span></td>
+                  <td className="p-2"><span className={`font-black ${item.isIncome ? 'text-green-600' : item.type === 'COMMISSION' ? 'text-amber-600' : 'text-red-600'}`}>{item.type}</span></td>
                   <td className="p-2">{item.reference}</td>
                   <td className="p-2">
                     {onNavigate ? (
-                      <button onClick={() => onNavigate(item.isIncome ? 'customers' : 'vendors', item.partyId)} className="text-blue-600 hover:underline font-bold">
+                      <button onClick={() => onNavigate(item.navigateTo, item.partyId)} className="text-blue-600 hover:underline font-bold">
                         {item.party}
                       </button>
                     ) : (

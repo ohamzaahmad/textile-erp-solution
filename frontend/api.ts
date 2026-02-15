@@ -252,6 +252,7 @@ export const invoicesAPI = {
   update: (id: string, data: any) => api.put<any>(`/invoices/${id}/`, data),
   delete: (id: string) => api.delete(`/invoices/${id}/`),
   addPayment: (id: string, payment: any) => api.post<any>(`/invoices/${id}/add_payment/`, payment),
+  settleCommission: (id: string, payment: any) => api.post<any>(`/invoices/${id}/settle_commission/`, payment),
   getSummary: () => api.get<any>('/invoices/summary/'),
   getOverdue: () => api.get<any[]>('/invoices/overdue/'),
 };

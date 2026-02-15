@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { vendorsAPI, customersAPI, invoicesAPI, billsAPI, inventoryAPI, emitToast } from '../api';
+import { vendorsAPI, customersAPI, brokersAPI, invoicesAPI, billsAPI, inventoryAPI, emitToast } from '../api';
 
 const parseCsv = (text: string) => {
   // Simple RFC4180-style line parser that handles quoted fields with commas
@@ -261,6 +261,102 @@ const CustomersImport: React.FC<{onImported?: () => void, downloadSample?: () =>
           <div className="mt-3 flex items-center space-x-3">
             <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' customers?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
               {loading ? 'Importing...' : 'Import Customers'}
+            </button>
+            {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
+            {failedRows.length > 0 && <button onClick={retryFailed} disabled={loading} className="px-2 py-1 border rounded text-sm">Retry Failed ({failedRows.length})</button>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const BrokersImport: React.FC<{onImported?: () => void, downloadSample?: () => void}> = ({ onImported, downloadSample }) => {
+  const [preview, setPreview] = useState<any[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [lastResult, setLastResult] = useState<{success:number, failed:number} | null>(null);
+  const [failedRows, setFailedRows] = useState<any[]>([]);
+
+  const onFile = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = String(e.target?.result || '');
+      const { headers, rows } = parseCsv(text);
+      setHeaders(headers);
+      setPreview(rows);
+    };
+    reader.readAsText(file);
+  };
+
+  const buildPayload = (row: any) => ({
+    name: row['name'] || row['Name'] || row['broker'] || row['Broker'] || '',
+    contact: row['contact'] || row['Contact'] || row['phone'] || row['Phone'] || '',
+    address: row['address'] || row['Address'] || ''
+  });
+
+  const doImport = async (rows?: any[]) => {
+    const toProcess = rows || preview;
+    if (!toProcess.length) return emitToast('No rows to import', 'error');
+    setLoading(true);
+    let success = 0;
+    let failed = 0;
+    const failedList: any[] = [];
+    for (const row of toProcess) {
+      const payload = buildPayload(row);
+      try {
+        await brokersAPI.create(payload);
+        success += 1;
+      } catch (e: any) {
+        failed += 1;
+        failedList.push(row);
+      }
+    }
+    setLoading(false);
+    setLastResult({ success, failed });
+    setFailedRows(failedList);
+    emitToast(`Imported ${success} brokers, ${failed} failed`, failed ? 'error' : 'success');
+    if (onImported) onImported();
+  };
+
+  const retryFailed = async () => {
+    if (!failedRows.length) return emitToast('No failed rows to retry', 'error');
+    await doImport(failedRows);
+  };
+
+  return (
+    <div className="bg-white p-6 rounded shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-black mb-4 uppercase tracking-wider text-slate-700">Import Brokers</h3>
+        <div>
+          <button onClick={downloadSample} className="px-3 py-2 border rounded text-sm text-slate-700 hover:bg-slate-50">Download sample</button>
+        </div>
+      </div>
+      <div className="mb-3 text-sm text-slate-600">Upload brokers CSV to bulk create broker records.</div>
+      <FileDropArea onFile={onFile} />
+      {preview.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 text-sm text-slate-600">Preview ({preview.length} rows)</div>
+          <div className="overflow-auto max-h-48 border rounded">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  {headers.map(h => <th key={h} className="p-2 border">{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {preview.map((r, i) => (
+                  <tr key={i} className="odd:bg-white even:bg-slate-50">
+                    {headers.map(h => <td key={h} className="p-2 border">{r[h]}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 flex items-center space-x-3">
+            <button onClick={() => { if (!preview.length) return emitToast('No rows to import','error'); if (!window.confirm('Import ' + preview.length + ' brokers?')) return; doImport(); }} disabled={loading} className="px-4 py-2 bg-[#7d2b3f] text-white rounded font-black text-sm hover:bg-[#5a1f2d]">
+              {loading ? 'Importing...' : 'Import Brokers'}
             </button>
             {lastResult && <div className="text-sm text-slate-700">Imported: {lastResult.success}, Failed: {lastResult.failed}</div>}
             {failedRows.length > 0 && <button onClick={retryFailed} disabled={loading} className="px-2 py-1 border rounded text-sm">Retry Failed ({failedRows.length})</button>}
@@ -606,7 +702,7 @@ const InventoryImport: React.FC<{vendorsMap: Record<string,string>, onImported?:
 };
 
 const Imports: React.FC = () => {
-  const [key, setKey] = useState<'suppliers' | 'customers' | 'invoices' | 'bills' | 'inventory'>('suppliers');
+  const [key, setKey] = useState<'suppliers' | 'customers' | 'brokers' | 'invoices' | 'bills' | 'inventory'>('suppliers');
   const [vendorsMap, setVendorsMap] = useState<Record<string,string>>({});
   const [customersMap, setCustomersMap] = useState<Record<string,string>>({});
 
@@ -638,6 +734,8 @@ const Imports: React.FC = () => {
         return `name,contact,address,bank_details,notes\nABC Textiles,+923001234567,"123 Textile Road, Lahore","Account: 12345678, Bank: ABC","Main supplier"\n`;
       case 'customers':
         return `name,contact,email,address,notes\nMr. Ahmed,+923001112223,ahmed@example.com,"12 Commerce Ave, Lahore","Retail"\n`;
+      case 'brokers':
+        return `name,contact,address,notes\nAli Broker,+923001234999,"45 Market Street, Lahore","Commission broker"\n`;
       case 'invoices':
         return `invoice_number,customer,customer_id,date,due_date,notes,items\nINV-001,Shah Fabrics,12,2026-01-05,2026-02-05,,123|10|50;124|5|25\n`;
       case 'bills':
@@ -673,6 +771,7 @@ const Imports: React.FC = () => {
         <button onClick={() => setKey('suppliers')} className={`px-3 py-1 rounded ${key === 'suppliers' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Suppliers</button>
         <button onClick={() => setKey('customers')} className={`px-3 py-1 rounded ${key === 'customers' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Customers</button>
         <button onClick={() => setKey('invoices')} className={`px-3 py-1 rounded ${key === 'invoices' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Invoices</button>
+        <button onClick={() => setKey('brokers')} className={`px-3 py-1 rounded ${key === 'brokers' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Brokers</button>
         <button onClick={() => setKey('bills')} className={`px-3 py-1 rounded ${key === 'bills' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Bills</button>
         <button onClick={() => setKey('inventory')} className={`px-3 py-1 rounded ${key === 'inventory' ? 'bg-[#7d2b3f] text-white' : 'bg-white text-slate-700'}`}>Inventory</button>
         {/* <div className="ml-4">
@@ -683,6 +782,7 @@ const Imports: React.FC = () => {
       {key === 'suppliers' && <SuppliersImport downloadSample={() => downloadSample('suppliers')} onImported={() => emitToast('Suppliers import complete', 'success')} />}
       {key === 'customers' && <CustomersImport downloadSample={() => downloadSample('customers')} onImported={() => emitToast('Customers import complete', 'success')} />}
       {key === 'invoices' && <InvoicesImport downloadSample={() => downloadSample('invoices')} vendorsMap={vendorsMap} customersMap={customersMap} onImported={() => emitToast('Invoices import complete', 'success')} />}
+      {key === 'brokers' && <BrokersImport downloadSample={() => downloadSample('brokers')} onImported={() => emitToast('Brokers import complete', 'success')} />}
       {key === 'bills' && <BillsImport downloadSample={() => downloadSample('bills')} vendorsMap={vendorsMap} onImported={() => emitToast('Bills import complete', 'success')} />}
       {key === 'inventory' && <InventoryImport downloadSample={() => downloadSample('inventory')} vendorsMap={vendorsMap} onImported={() => emitToast('Inventory import complete', 'success')} />}
     </div>

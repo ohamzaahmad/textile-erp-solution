@@ -1,7 +1,7 @@
 from decimal import Decimal
 from rest_framework import serializers
 from .models import (
-    Transaction, PaymentRecord, Invoice, InvoiceItem, 
+    Transaction, PaymentRecord, CommissionPayment, Invoice, InvoiceItem, 
     Bill, BillItem
 )
 from inventory.serializers import InventoryItemSerializer
@@ -34,6 +34,18 @@ class PaymentRecordSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+class CommissionPaymentSerializer(serializers.ModelSerializer):
+    """Serializer for CommissionPayment model"""
+
+    class Meta:
+        model = CommissionPayment
+        fields = [
+            'id', 'invoice', 'date', 'amount', 'method', 'bank_name', 'tid',
+            'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
 class InvoiceItemSerializer(serializers.ModelSerializer):
     """Serializer for InvoiceItem model"""
     inventory_item_details = InventoryItemSerializer(source='inventory_item', read_only=True)
@@ -52,6 +64,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
     """Serializer for Invoice model"""
     items = InvoiceItemSerializer(many=True, read_only=True)
     payment_records = PaymentRecordSerializer(many=True, read_only=True)
+    commission_payments = CommissionPaymentSerializer(many=True, read_only=True)
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     broker_name = serializers.CharField(source='broker.name', read_only=True)
     balance_due = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
@@ -60,9 +73,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
         model = Invoice
         fields = [
             'id', 'invoice_number', 'customer', 'customer_name',
-            'broker', 'broker_name', 'commission_type', 'commission_value', 'commission_amount',
+            'broker', 'broker_name', 'commission_type', 'commission_value', 'commission_amount', 'commission_paid',
             'date', 'due_date', 'status', 'total', 'amount_paid',
-            'balance_due', 'notes', 'items', 'payment_records',
+            'balance_due', 'notes', 'items', 'payment_records', 'commission_payments',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'status', 'created_at', 'updated_at']

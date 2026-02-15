@@ -75,6 +75,8 @@ export interface Invoice {
   commissionType?: 'Percentage' | 'Fixed';
   commissionValue?: number;
   commissionAmount?: number;
+  commissionPaid?: number;
+  commissionPayments?: PaymentRecord[];
   date: string;
   dueDate: string;
   items: { itemId: string; meters: number; price: number }[];

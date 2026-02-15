@@ -49,6 +49,11 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   const [creationDueDays, setCreationDueDays] = useState<number>(30);
   const [currentLineItem, setCurrentLineItem] = useState({ itemId: '', meters: 0, price: 0 });
   const [brokerFilterText, setBrokerFilterText] = useState('');
+  const [docFilterText, setDocFilterText] = useState('');
+  const [nameFilterText, setNameFilterText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'All'|'Paid'|'Partially Paid'|'Unpaid'>('All');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
 
   // Settlement Modal States
   const [settleAmount, setSettleAmount] = useState<number>(0);
@@ -234,13 +239,51 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    if (type !== 'Invoice' || !brokerFilterText.trim()) return sortedItems;
-    const q = brokerFilterText.trim().toLowerCase();
-    return sortedItems.filter((it: any) => {
-      const brokerName = (it.brokerName || brokers.find((b: any) => b.id === it.brokerId)?.name || '').toString().toLowerCase();
-      return brokerName.includes(q);
-    });
-  }, [sortedItems, brokerFilterText, brokers, type]);
+    let list = [...sortedItems];
+
+    // filter by name (customer/vendor)
+    if (nameFilterText.trim()) {
+      const q = nameFilterText.trim().toLowerCase();
+      list = list.filter((it: any) => {
+        const partyName = (type === 'Invoice' ? customers.find(c => c.id === it.customerId)?.name : vendors.find(v => v.id === it.vendorId)?.name) || '';
+        return partyName.toString().toLowerCase().includes(q);
+      });
+    }
+
+    // filter by doc id/text
+    if (docFilterText.trim()) {
+      const q = docFilterText.trim().toLowerCase();
+      list = list.filter((it: any) => (it.id || '').toString().toLowerCase().includes(q));
+    }
+
+    // filter by status
+    if (statusFilter !== 'All') {
+      list = list.filter((it: any) => (it.status || '') === statusFilter);
+    }
+
+    // filter by date range
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      list = list.filter((it: any) => new Date(it.date) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo);
+      // include entire day
+      to.setHours(23,59,59,999);
+      list = list.filter((it: any) => new Date(it.date) <= to);
+    }
+
+    // filter by broker when invoice
+    if (type === 'Invoice' && brokerFilterText.trim()) {
+      const q = brokerFilterText.trim().toLowerCase();
+      list = list.filter((it: any) => {
+        const brokerName = (it.brokerName || brokers.find((b: any) => b.id === it.brokerId)?.name || '').toString().toLowerCase();
+        return brokerName.includes(q);
+      });
+    }
+
+    return list;
+  }, [sortedItems, brokerFilterText, brokers, type, nameFilterText, docFilterText, statusFilter, dateFrom, dateTo, customers, vendors]);
 
   // Print view moved to shared component PrintPreview
 
@@ -328,8 +371,30 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{type === 'Bill' ? 'Accounts Payable' : 'Accounts Receivable'}</p>
           </div>
         </div>
-        {!isCreating && type !== 'Bill' && (
+        {!isCreating && (
           <div className="flex items-center space-x-3">
+            <input
+              type="text"
+              placeholder={`Filter by ${type === 'Invoice' ? 'customer' : 'supplier'}...`}
+              value={nameFilterText}
+              onChange={e => setNameFilterText(e.target.value)}
+              className="text-sm font-bold p-2 border border-slate-200 rounded-lg shadow-sm bg-white outline-none w-56"
+            />
+            <input
+              type="text"
+              placeholder="Filter by doc #..."
+              value={docFilterText}
+              onChange={e => setDocFilterText(e.target.value)}
+              className="text-sm font-bold p-2 border border-slate-200 rounded-lg shadow-sm bg-white outline-none w-36"
+            />
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)} className="text-sm font-bold p-2 border border-slate-200 rounded-lg bg-white outline-none">
+              <option value="All">All</option>
+              <option value="Paid">Paid</option>
+              <option value="Partially Paid">Partially Paid</option>
+              <option value="Unpaid">Unpaid</option>
+            </select>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="text-sm p-2 border border-slate-200 rounded-lg bg-white" />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="text-sm p-2 border border-slate-200 rounded-lg bg-white" />
             {type === 'Invoice' && (
               <input
                 type="text"
@@ -341,7 +406,7 @@ const InvoiceBillCenter: React.FC<InvoiceBillCenterProps> = ({
             )}
             <button 
               onClick={() => setIsCreating(true)}
-              className="bg-[#7d2b3f] text-white px-8 py-3 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all duration-300 ease-in-out shadow-lg active:scale-95 transform uppercase tracking-widest"
+              className="bg-[#7d2b3f] text-white px-6 py-2 rounded-xl text-[11px] font-black hover:bg-[#5a1f2d] transition-all duration-300 ease-in-out shadow-lg active:scale-95 transform uppercase tracking-widest"
             >
               <i className="fas fa-plus mr-2"></i> Create New {type}
             </button>

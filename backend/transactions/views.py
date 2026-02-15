@@ -7,11 +7,11 @@ from rest_framework import filters
 from django.db.models import Sum, Q, Count
 from datetime import datetime, timedelta
 from .models import (
-    Transaction, PaymentRecord, Invoice, InvoiceItem,
+    Transaction, PaymentRecord, CommissionPayment, Invoice, InvoiceItem,
     Bill, BillItem
 )
 from .serializers import (
-    TransactionSerializer, PaymentRecordSerializer,
+    TransactionSerializer, PaymentRecordSerializer, CommissionPaymentSerializer,
     InvoiceSerializer, InvoiceCreateSerializer,
     BillSerializer, BillCreateSerializer
 )
@@ -65,7 +65,7 @@ class PaymentRecordViewSet(viewsets.ReadOnlyModelViewSet):
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     """ViewSet for managing invoices"""
-    queryset = Invoice.objects.all().select_related('customer', 'broker').prefetch_related('items', 'payment_records')
+    queryset = Invoice.objects.all().select_related('customer', 'broker').prefetch_related('items', 'payment_records', 'commission_payments')
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -113,6 +113,45 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(invoice)
             return Response(serializer.data)
         
+        return Response(payment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def settle_commission(self, request, pk=None):
+        """Add a partial or full commission payment to an invoice's broker commission"""
+        invoice = self.get_object()
+
+        if not invoice.broker:
+            return Response({'detail': 'This invoice has no broker assigned.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        commission_remaining = invoice.commission_amount - invoice.commission_paid
+        if commission_remaining <= 0:
+            return Response({'detail': 'Commission already fully settled.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build commission payment data
+        payment_data = request.data.copy()
+        payment_data['invoice'] = invoice.id
+
+        payment_serializer = CommissionPaymentSerializer(data=payment_data)
+        if payment_serializer.is_valid():
+            payment = payment_serializer.save()
+
+            # Update commission_paid on invoice
+            invoice.commission_paid += payment.amount
+            invoice.save()
+
+            # Create a Settlement transaction record
+            Transaction.objects.create(
+                transaction_type='Settlement',
+                date=payment.date,
+                amount=payment.amount,
+                description=f"Commission payment for Invoice {invoice.invoice_number} to broker {invoice.broker.name}",
+                reference_id=f"COMM-{payment.id}",
+                customer=invoice.customer
+            )
+
+            serializer = self.get_serializer(invoice)
+            return Response(serializer.data)
+
         return Response(payment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'])

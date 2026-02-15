@@ -136,6 +136,7 @@ class Invoice(models.Model):
     commission_type = models.CharField(max_length=20, choices=COMMISSION_TYPES, blank=True)
     commission_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     commission_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    commission_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     amount_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     notes = models.TextField(blank=True)
     
@@ -175,6 +176,38 @@ class Invoice(models.Model):
             return self.commission_value
 
         return Decimal('0.00')
+
+
+class CommissionPayment(models.Model):
+    """Tracks partial payments of broker commissions on invoices"""
+
+    PAYMENT_METHODS = [
+        ('Cash', 'Cash'),
+        ('Bank', 'Bank'),
+    ]
+
+    invoice = models.ForeignKey(
+        'Invoice',
+        on_delete=models.CASCADE,
+        related_name='commission_payments'
+    )
+    date = models.DateField()
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='Cash')
+    bank_name = models.CharField(max_length=255, blank=True, null=True)
+    tid = models.CharField(max_length=100, blank=True, null=True, help_text='Transaction ID')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'commission_payments'
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"Commission Payment - {self.amount} ({self.method})"
 
 
 class InvoiceItem(models.Model):

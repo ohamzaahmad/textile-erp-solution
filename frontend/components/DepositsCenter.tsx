@@ -1,19 +1,25 @@
 
 import React from 'react';
-import { Invoice, Bill, PaymentRecord } from '../types';
+import { Invoice, Bill, PaymentRecord, Broker } from '../types';
 
 interface DepositsCenterProps {
   invoices: Invoice[];
   bills: Bill[];
+  brokers: Broker[];
 }
 
-const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills }) => {
-  // Aggregate all payments from invoices and bills
+const DepositsCenter: React.FC<DepositsCenterProps> = ({ invoices, bills, brokers }) => {
+  // Aggregate all payments from invoices, bills, and commission settlements
   const allPayments: (PaymentRecord & { source: string; partyName: string; type: 'Incoming' | 'Outgoing' })[] = [];
 
   invoices.forEach(inv => {
     inv.paymentHistory.forEach(pay => {
       allPayments.push({ ...pay, source: `Sale #${inv.id}`, partyName: 'Customer Payment', type: 'Incoming' });
+    });
+    // Commission payments to brokers
+    (inv.commissionPayments || []).forEach(cp => {
+      const brokerName = brokers.find(b => b.id === inv.brokerId)?.name || 'Broker';
+      allPayments.push({ ...cp, source: `Commission - Sale #${inv.id}`, partyName: `Broker: ${brokerName}`, type: 'Outgoing' });
     });
   });
 

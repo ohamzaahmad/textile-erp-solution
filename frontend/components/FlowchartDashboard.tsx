@@ -7,6 +7,7 @@ interface FlowchartDashboardProps {
   financialSummary?: {
     payables: number;
     receivables: number;
+    commissionPayable: number;
   };
 }
 
@@ -114,7 +115,8 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
             {(() => {
               const payables = financialSummary?.payables ?? 0;
               const receivables = financialSummary?.receivables ?? 0;
-              const net = receivables - payables;
+              const commissionPayable = financialSummary?.commissionPayable ?? 0;
+              const net = receivables - payables - commissionPayable;
               const fmt = new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', maximumFractionDigits: 2 });
               return (
                 <>
@@ -125,6 +127,10 @@ const FlowchartDashboard: React.FC<FlowchartDashboardProps> = ({ onNavigate, fin
                   <div className="flex justify-between items-center text-[11px] py-1 border-b border-slate-50">
                     <span className="text-slate-500 font-bold uppercase">Receivables</span>
                     <span className="text-green-600 font-black">{fmt.format(receivables)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] py-1 border-b border-slate-50">
+                    <span className="text-slate-500 font-bold uppercase">Commission Payable</span>
+                    <span className="text-amber-600 font-black">{fmt.format(commissionPayable)}</span>
                   </div>
                   <div className="pt-2 flex justify-between items-center text-[12px] font-black bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <span className="text-slate-700 uppercase">Net Position</span>
