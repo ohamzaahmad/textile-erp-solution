@@ -7,6 +7,12 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
+# Optional helper to parse DATABASE_URL in production (added for Render deploy)
+try:
+    import dj_database_url
+except Exception:
+    dj_database_url = None
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -87,16 +93,22 @@ WSGI_APPLICATION = 'textileflow.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 # PostgreSQL Configuration (loaded from .env)
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'textileflow_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+if os.environ.get('DATABASE_URL') and dj_database_url:
+    # Use DATABASE_URL when provided (Render, Heroku, etc.)
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.getenv('DB_NAME', 'textileflow_db'),
+            'USER': os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 
 # Password validation
